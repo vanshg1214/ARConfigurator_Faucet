@@ -38,9 +38,19 @@ export const tapPlaceComponent = {
         }
 
         if (this.faucetElement) {
-          // Move the existing faucet to the new tap location
-          this.faucetElement.setAttribute('position', touchPoint)
-          this.faucetElement.setAttribute('rotation', `0 ${rotationY} 0`)
+          // Move the existing faucet to the new tap location smoothly
+          this.faucetElement.setAttribute('animation__pos', {
+            property: 'position',
+            to: `${touchPoint.x} ${touchPoint.y} ${touchPoint.z}`,
+            easing: 'easeOutQuad',
+            dur: 500,
+          })
+          this.faucetElement.setAttribute('animation__rot', {
+            property: 'rotation',
+            to: `0 ${rotationY} 0`,
+            easing: 'easeOutQuad',
+            dur: 500,
+          })
           return
         }
 
@@ -51,6 +61,12 @@ export const tapPlaceComponent = {
         // The raycaster gives a location of the touch in the scene
         newElement.setAttribute('position', touchPoint)
         newElement.setAttribute('rotation', `0 ${rotationY} 0`)
+
+        // Allow gestures
+        newElement.classList.add('cantap')
+        newElement.setAttribute('xrextras-hold-drag', '')
+        newElement.setAttribute('xrextras-two-finger-rotate', '')
+        newElement.setAttribute('xrextras-pinch-scale', '')
 
         newElement.setAttribute('visible', 'false')
         newElement.setAttribute('scale', '0.0001 0.0001 0.0001')
@@ -104,8 +120,19 @@ export const tapPlaceComponent = {
               if (node.name && node.name.toLowerCase().includes('water')) {
                 node.visible = false
                 this.waterNodes.push(node)
-              }
-              if (node.isMesh && node.material) {
+                
+                // Force water to be white and glassy
+                if (node.isMesh && node.material) {
+                  const materials = Array.isArray(node.material) ? node.material : [node.material]
+                  materials.forEach((mat) => {
+                    if (mat.color) mat.color.setHex(0xffffff)
+                    if (mat.metalness !== undefined) mat.metalness = 0.1
+                    if (mat.roughness !== undefined) mat.roughness = 0.1
+                    mat.transparent = true
+                    mat.opacity = 0.8
+                  })
+                }
+              } else if (node.isMesh && node.material) {
                 const materials = Array.isArray(node.material) ? node.material : [node.material]
                 materials.forEach((mat) => {
                   // Fully metallic
@@ -182,7 +209,7 @@ export const tapPlaceComponent = {
       const obj = this.faucetElement.getObject3D('mesh')
       if (obj) {
         obj.traverse((node) => {
-          if (node.isMesh && node.material) {
+          if (node.isMesh && node.material && (!node.name || !node.name.toLowerCase().includes('water'))) {
             const materials = Array.isArray(node.material) ? node.material : [node.material]
             materials.forEach((mat) => {
               if (mat.color) mat.color.setHex(hexColor)
