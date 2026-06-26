@@ -159,8 +159,13 @@
   animation: none;
 }
 
-/* Hide 8th Wall watermark */
-#poweredby,
-a[href*="8thwall.com"] {
+/* Hide 8th Wall watermark - all known selectors */
+#poweredby, .poweredby,
+[class*="powered-by"], [class*="poweredBy"],
+[id*="powered"], [class*="xrextras-powered"],
+a[href*="8thwall.com"], a[href*="8thwall.io"] {
   display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
