@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "cd public/aframe-cactus && npm install && npm run build && cd ../.. && next build",
+    "build": "cd public/aframe-cactus && npm install --production=false && npm run build && cd ../.. && next build",
     "start": "next start",
     "lint": "eslint"
   },
