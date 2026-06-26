@@ -38,16 +38,11 @@ export const tapPlaceComponent = {
         }
 
         if (this.faucetElement) {
-          // Move the existing faucet to the new tap location smoothly
+          // Move the existing faucet to the new tap location smoothly, 
+          // but preserve the user's custom rotation
           this.faucetElement.setAttribute('animation__pos', {
             property: 'position',
             to: `${touchPoint.x} ${touchPoint.y} ${touchPoint.z}`,
-            easing: 'easeOutQuad',
-            dur: 500,
-          })
-          this.faucetElement.setAttribute('animation__rot', {
-            property: 'rotation',
-            to: `0 ${rotationY} 0`,
             easing: 'easeOutQuad',
             dur: 500,
           })
@@ -67,6 +62,11 @@ export const tapPlaceComponent = {
         newElement.setAttribute('xrextras-hold-drag', '')
         newElement.setAttribute('xrextras-two-finger-rotate', '')
         newElement.setAttribute('xrextras-pinch-scale', 'min: 0.05; max: 0.4')
+
+        // Clean up animations when they finish so they don't fight with touch gestures
+        newElement.addEventListener('animationcomplete', (e) => {
+          newElement.removeAttribute(e.detail.name)
+        })
 
         newElement.setAttribute('visible', 'false')
         newElement.setAttribute('scale', '0.0001 0.0001 0.0001')
