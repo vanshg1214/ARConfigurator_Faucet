@@ -66,7 +66,7 @@ export const tapPlaceComponent = {
         newElement.classList.add('cantap')
         newElement.setAttribute('xrextras-hold-drag', '')
         newElement.setAttribute('xrextras-two-finger-rotate', '')
-        newElement.setAttribute('xrextras-pinch-scale', '')
+        newElement.setAttribute('xrextras-pinch-scale', 'min: 0.05; max: 0.4')
 
         newElement.setAttribute('visible', 'false')
         newElement.setAttribute('scale', '0.0001 0.0001 0.0001')
