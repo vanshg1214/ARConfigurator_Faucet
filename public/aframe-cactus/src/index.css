@@ -1,0 +1,160 @@
+/* Style for "Tap To Place Model" text overlay */
+.over {
+  z-index: 10;
+  pointer-events: none;
+  position:absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  
+  text-align: center;
+  color: white;
+  font-family: 'Nunito', monospace;
+  text-shadow: 0px 0px 5px black;
+}
+#promptText {
+  font-size: 2em;
+  bottom: 12vh;
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, 0);
+}
+
+.button-container {
+  position: absolute;
+  bottom: 8vh;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 24px;
+  z-index: 20;
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.sphere-btn {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 
+    0 6px 12px rgba(0,0,0,0.4), 
+    inset 0 4px 8px rgba(255,255,255,0.7), 
+    inset 0 -6px 12px rgba(0,0,0,0.6);
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.2s;
+  pointer-events: auto;
+}
+
+.sphere-btn:active {
+  transform: scale(0.92);
+  box-shadow: 
+    0 2px 5px rgba(0,0,0,0.5), 
+    inset 0 4px 8px rgba(255,255,255,0.7), 
+    inset 0 -6px 12px rgba(0,0,0,0.6);
+}
+
+.gold-btn {
+  background: radial-gradient(circle at 35% 25%, #ffffff 0%, #ffdf70 20%, #d4af37 50%, #886622 80%, #3a2608 100%);
+}
+
+.silver-btn {
+  background: radial-gradient(circle at 35% 25%, #ffffff 0%, #f0f0f0 20%, #cccccc 50%, #888888 80%, #333333 100%);
+}
+
+.black-btn {
+  background: radial-gradient(circle at 35% 25%, #999999 0%, #444444 25%, #1a1a1a 60%, #000000 100%);
+}
+
+/* Premium Action Button Styles */
+.action-container {
+  position: absolute;
+  bottom: 22vh;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  background: rgba(30, 144, 255, 0.15);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 30px;
+  border: 1px solid rgba(135, 206, 235, 0.4);
+  box-shadow: 0 8px 32px rgba(0, 100, 255, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-family: 'Nunito', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  pointer-events: auto;
+  overflow: hidden;
+  position: relative;
+}
+
+.action-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 50%; height: 100%;
+  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+  transform: skewX(-25deg);
+  animation: shine 4s infinite;
+}
+
+@keyframes shine {
+  0% { left: -100%; }
+  20% { left: 200%; }
+  100% { left: 200%; }
+}
+
+.action-btn:hover {
+  background: rgba(30, 144, 255, 0.3);
+  box-shadow: 0 12px 40px rgba(0, 100, 255, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.action-btn:active {
+  transform: translateY(1px) scale(0.96);
+  box-shadow: 0 4px 16px rgba(0, 100, 255, 0.2);
+}
+
+.water-icon {
+  animation: pulse-icon 2s infinite ease-in-out;
+}
+
+@keyframes pulse-icon {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); color: #87ceeb; }
+}
+
+.action-btn.active {
+  background: rgba(0, 200, 100, 0.2);
+  border-color: rgba(0, 255, 150, 0.5);
+  box-shadow: 0 8px 32px rgba(0, 255, 100, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+}
+.action-btn.active .water-icon {
+  color: #00ff96;
+  animation: none;
+}
