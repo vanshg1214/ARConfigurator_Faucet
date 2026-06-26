@@ -41,12 +41,12 @@ export const tapPlaceComponent = {
         document.querySelectorAll(sel).forEach(el => { el.style.display = 'none' })
       })
       // Also hide any element containing the text "Powered by 8th Wall"
-      document.querySelectorAll('*').forEach(el => {
+      document.querySelectorAll('div, span, a, p').forEach(el => {
         if (el.children.length === 0 && el.textContent.includes('8th Wall')) {
           let parent = el
           // Walk up max 4 levels to hide the containing badge
           for (let i = 0; i < 4; i++) {
-            if (parent && parent !== document.body) {
+            if (parent && parent !== document.body && parent !== document.documentElement && parent.tagName !== 'HEAD') {
               parent.style.display = 'none'
               parent = parent.parentElement
             }
