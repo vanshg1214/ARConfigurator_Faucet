@@ -82,7 +82,8 @@
 /* Premium Action Button Styles */
 .action-container {
   position: absolute;
-  bottom: 8vh;
+  bottom: max(5%, 30px);
+  padding-bottom: env(safe-area-inset-bottom, 15px);
   left: 0;
   width: 100%;
   display: flex;
@@ -264,7 +265,8 @@ a[href*="8thwall.com"], a[href*="8thwall.io"] {
   }
   
   .action-container {
-    bottom: 6vh !important;
+    bottom: max(4%, 25px) !important;
+    padding-bottom: env(safe-area-inset-bottom, 10px) !important;
   }
 }
 
@@ -272,6 +274,8 @@ a[href*="8thwall.com"], a[href*="8thwall.io"] {
 .details-card-projected {
   position: absolute;
   width: 320px;
+  max-height: 85vh;
+  overflow-y: auto;
   padding: 24px;
   background: linear-gradient(145deg, rgba(15, 15, 15, 0.85), rgba(0, 0, 0, 0.95));
   backdrop-filter: blur(24px);
@@ -349,8 +353,10 @@ a[href*="8thwall.com"], a[href*="8thwall.io"] {
   .details-card-projected {
     width: 90% !important;
     left: 5% !important;
-    bottom: 12vh !important;
+    bottom: max(14vh, 100px) !important;
     top: auto !important; /* Ignore top projection */
+    max-height: 65vh !important;
+    overflow-y: auto !important;
     transform: translateY(20px) !important;
     transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
   }

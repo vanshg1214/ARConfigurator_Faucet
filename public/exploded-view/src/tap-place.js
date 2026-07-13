@@ -122,6 +122,9 @@ export const tapPlaceComponent = {
 
     // --- Touch Gesture Handlers ---
     const onTouchStart = (e) => {
+      const card = document.getElementById('detailsCard')
+      if (card && card.style.display === 'block' && card.classList.contains('show')) return
+
       const touches = Array.from(e.touches)
       touches.forEach(t => { this._touches[t.identifier] = { x: t.clientX, y: t.clientY } })
 
@@ -135,6 +138,9 @@ export const tapPlaceComponent = {
     }
 
     const onTouchMove = (e) => {
+      const card = document.getElementById('detailsCard')
+      if (card && card.style.display === 'block' && card.classList.contains('show')) return
+
       if (!this.engineElement || !this._gestureActive) return
       const touches = Array.from(e.touches)
       if (touches.length < 2) return
@@ -183,6 +189,9 @@ export const tapPlaceComponent = {
       if (!g) { setTimeout(attachListener, 100); return; }
 
       g.addEventListener('click', (event) => {
+        const card = document.getElementById('detailsCard')
+        if (card && card.style.display === 'block' && card.classList.contains('show')) return
+
         if (this.prompt) this.prompt.style.display = 'none'
         const touchPoint = event.detail.intersection.point
 
@@ -200,7 +209,7 @@ export const tapPlaceComponent = {
           // Smoothly glide to new position, preserve user's custom rotation/scale
           this.engineElement.setAttribute('animation__pos', {
             property: 'position',
-            to: `${touchPoint.x} ${touchPoint.y + 10.0} ${touchPoint.z}`,
+            to: `${touchPoint.x} ${touchPoint.y} ${touchPoint.z}`,
             easing: 'easeOutQuad',
             dur: 500,
           })
@@ -211,7 +220,7 @@ export const tapPlaceComponent = {
         const newElement = document.createElement('a-entity')
         this.engineElement = newElement
 
-        newElement.setAttribute('position', `${touchPoint.x} ${touchPoint.y + 10.0} ${touchPoint.z}`)
+        newElement.setAttribute('position', `${touchPoint.x} ${touchPoint.y} ${touchPoint.z}`)
         newElement.setAttribute('rotation', `0 ${rotationY} 0`)
 
         newElement.addEventListener('animationcomplete', (e) => {
