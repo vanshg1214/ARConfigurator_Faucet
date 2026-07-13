@@ -39,6 +39,47 @@ export const tapPlaceComponent = {
     this.explodeProgress = 0.0
     this.transitionDuration = 1800 // 1.8 seconds for an ultra-premium, slow ease-in-out transition
 
+    this.hotspots = []
+    this.hasSelectedHotspot = false
+    this.partInfo = {
+      tube_front: {
+        title: "Front Fan Shroud",
+        desc: "Aerodynamic intake casing designed to direct airflow smoothly into the compressor blades while minimizing drag."
+      },
+      blades: {
+        title: "Titanium Fan Blades",
+        desc: "High-bypass fan blades that compress and propel massive volumes of air to generate primary propulsion thrust."
+      },
+      turbine_hull: {
+        title: "Outer Engine Casing",
+        desc: "Structural protective housing engineered to contain high-energy mechanical components and channel bypass airflow."
+      },
+      turbine_hull_middle: {
+        title: "Compressor Casing",
+        desc: "High-pressure compressor housing designed to maintain thermal stability under extreme mechanical pressure cycles."
+      },
+      electronics_side: {
+        title: "Sensor & Control Array",
+        desc: "Control instrumentation and optical sensors that monitor exhaust temperature, pressure, fuel flow, and rotor speed."
+      },
+      flaps: {
+        title: "Variable Exhaust Flaps",
+        desc: "Exhaust nozzle flaps that adjust the exhaust exit area to optimize engine pressure ratio and thrust output."
+      },
+      plates_back: {
+        title: "Exhaust Tail Cone",
+        desc: "Aerodynamic exhaust cone that guides hot exhaust gases smoothly back into the atmosphere, reducing wake turbulence."
+      },
+      fins_outside: {
+        title: "Stabilization Pylon Mounts",
+        desc: "External stabilization mounts and structural ribs that secure the engine assembly to the aircraft fuselage or wing pylon."
+      },
+      containers: {
+        title: "Modular Accessory Box",
+        desc: "Accessory compartments housing auxiliary power units, main fuel pumps, oil filters, and hydraulic controllers."
+      }
+    }
+
     // --- Smooth Gesture State ---
     this._targetScale = 1.0
     this._targetRotY = 0
@@ -184,6 +225,51 @@ export const tapPlaceComponent = {
         this.el.sceneEl.appendChild(newElement)
 
         newElement.addEventListener('model-loaded', () => {
+          // Define hotspot offsets relative to part centers
+          const THREE = AFRAME.THREE
+          this.hotspotOffsets = {
+            tube_front: new THREE.Vector3(0, 1.4, 0),
+            blades: new THREE.Vector3(0, 1.2, 0.4),
+            turbine_hull: new THREE.Vector3(0, 1.4, 0),
+            turbine_hull_middle: new THREE.Vector3(0, 1.4, 0),
+            electronics_side: new THREE.Vector3(0.6, 1.1, 0),
+            flaps: new THREE.Vector3(0, 1.3, 0),
+            plates_back: new THREE.Vector3(0, 1.2, 0),
+            fins_outside: new THREE.Vector3(0, 1.4, 0),
+            containers: new THREE.Vector3(0, -1.3, 0),
+          }
+
+          // Create reference 3D entities and HTML markers
+          this.hotspots3D = []
+          this.hotspotHTMLs = []
+          const container = document.getElementById('hotspotMarkersContainer')
+          const keys = ['tube_front', 'blades', 'turbine_hull', 'turbine_hull_middle', 'electronics_side', 'flaps', 'plates_back', 'fins_outside', 'containers']
+          
+          keys.forEach(key => {
+            // 3D Reference point (dummy invisible entity)
+            const refEl = document.createElement('a-entity')
+            refEl.setAttribute('visible', 'false')
+            refEl.dataset.key = key
+            this.el.sceneEl.appendChild(refEl)
+            this.hotspots3D.push(refEl)
+            
+            // HTML Marker Button
+            const markerDiv = document.createElement('div')
+            markerDiv.className = 'hotspot-marker'
+            markerDiv.style.display = 'none'
+            markerDiv.dataset.key = key
+            
+            markerDiv.addEventListener('click', (e) => {
+              e.stopPropagation()
+              this.showPartDetails(key)
+            })
+            
+            if (container) {
+              container.appendChild(markerDiv)
+            }
+            this.hotspotHTMLs.push(markerDiv)
+          })
+
           // Generate environment map
           const sceneEl = this.el.sceneEl
           if (sceneEl && sceneEl.object3D && !sceneEl.object3D.environment) {
@@ -366,14 +452,45 @@ export const tapPlaceComponent = {
         if (explodeBtnText) {
           explodeBtnText.innerText = this.isExploded ? 'Assemble' : 'Expand Engine'
         }
+
+        // Hide details card if we are assembling back
+        if (!this.isExploded) {
+            this.hidePartDetails()
+        }
       })
     }
 
+    this.activePartKey = null
 
+    // Connect close click listener to the projected details card
+    const closeDetailsBtn = document.getElementById('closeDetailsBtn')
+    if (closeDetailsBtn) {
+      closeDetailsBtn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        this.hidePartDetails()
+      })
+    }
   },
 
   tick(time, timeDelta) {
-    // Update mesh separation coordinates smoothly
+    // 1. Scale and Rotate Lerps (runs regardless of explosion state)
+    if (this.engineElement) {
+      const lerpFactor = 1 - Math.pow(0.05, timeDelta / 1000)
+      const prevScale = this._currentScale
+      const prevRotY = this._currentRotY
+
+      this._currentScale += (this._targetScale - this._currentScale) * lerpFactor
+      this._currentRotY += (this._targetRotY - this._currentRotY) * lerpFactor
+
+      if (Math.abs(this._currentScale - prevScale) > 0.0001 ||
+          Math.abs(this._currentRotY - prevRotY) > 0.01) {
+        const s = this._currentScale
+        this.engineElement.object3D.scale.set(s, s, s)
+        this.engineElement.object3D.rotation.y = this._currentRotY * (Math.PI / 180)
+      }
+    }
+
+    // 2. Exploded view calculations
     if (this.explosionNodes && this.explosionNodes.length > 0 && this.engineElement) {
       // Update global transition progress
       const rate = timeDelta / this.transitionDuration
@@ -383,7 +500,7 @@ export const tapPlaceComponent = {
         this.explodeProgress = Math.max(0.0, this.explodeProgress - rate)
       }
 
-      // Quintic Ease-in-out formula (slow start, acceleration, soft landing)
+      // Quintic Ease-in-out formula
       const easeInOutQuint = (x) => {
         return x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2
       }
@@ -393,30 +510,22 @@ export const tapPlaceComponent = {
       // Update animated offsets and sliders
       const keys = ['tube_front', 'blades', 'turbine_hull', 'turbine_hull_middle', 'electronics_side', 'flaps', 'plates_back', 'fins_outside', 'containers']
       keys.forEach(key => {
-        // If not snapping, update the offset
         if (this.explodeProgress < 1.0 || !this.isExploded) {
           this.currentOffsets[key] = t * this.sliderOffsets[key]
         }
         
-        // Sync UI slider handle and numbers
         const sliderEl = this.sliderElements[key]
         const displayEl = this.displayElements[key]
-        if (sliderEl) {
-          sliderEl.value = this.currentOffsets[key]
-        }
-        if (displayEl) {
-          displayEl.innerText = this.currentOffsets[key].toFixed(3)
-        }
+        if (sliderEl) sliderEl.value = this.currentOffsets[key]
+        if (displayEl) displayEl.innerText = this.currentOffsets[key].toFixed(3)
       })
 
       // Apply offsets to 3D nodes
       const obj = this.engineElement.getObject3D('mesh')
       if (obj) {
-        // Ensure world matrices are fully updated
         this.engineElement.object3D.updateMatrixWorld(true)
         obj.updateMatrixWorld(true)
 
-        // Get direction of root's Z-axis (blue line) in world space
         const worldDir = new THREE.Vector3(0, 0, 1).transformDirection(obj.matrixWorld)
 
         this.explosionNodes.forEach(node => {
@@ -424,13 +533,9 @@ export const tapPlaceComponent = {
             const key = node.userData.key
             const offset = this.currentOffsets[key]
             
-            // Convert original local position to world space
             const originalWorldPos = node.userData.originalLocalPos.clone().applyMatrix4(node.parent.matrixWorld)
-
-            // Shift along the world Z-axis of the root
             const targetWorldPos = originalWorldPos.clone().addScaledVector(worldDir, offset)
 
-            // Convert target world position back to parent's local space
             const targetLocalPos = targetWorldPos.clone()
             node.parent.worldToLocal(targetLocalPos)
 
@@ -438,24 +543,197 @@ export const tapPlaceComponent = {
             node.updateMatrix()
           }
         })
+
+        // 3. Update hotspots (opacity, visibility, and screen projection)
+        const hotspotOpacity = Math.max(0.0, Math.min(1.0, (this.explodeProgress - 0.25) * 1.6))
+        const camera = this.el.sceneEl.camera
+        const card = document.getElementById('detailsCard')
+        const isCardVisible = card && card.style.display === 'block' && card.classList.contains('show')
+
+        this.hotspots3D.forEach(ref => {
+          const key = ref.dataset.key
+          const markerDiv = this.hotspotHTMLs.find(m => m.dataset.key === key)
+          if (!markerDiv) return
+
+          if (hotspotOpacity <= 0.0) {
+            markerDiv.style.display = 'none'
+          } else {
+            // Update 3D reference node position first
+            const node = this.explosionNodes.find(n => n.userData.key === key)
+            if (node) {
+              const worldPos = new THREE.Vector3()
+              node.getWorldPosition(worldPos)
+              
+              const localOffset = this.hotspotOffsets[key] || new THREE.Vector3(0, 1.2, 0)
+              const worldOffset = localOffset.clone().applyQuaternion(node.getWorldQuaternion(new THREE.Quaternion()))
+              worldPos.add(worldOffset)
+              
+              ref.object3D.position.copy(worldPos)
+              
+              // Project to 2D Screen
+              if (camera) {
+                const screenPos = worldPos.clone()
+                screenPos.project(camera)
+                
+                const isBehindCamera = screenPos.z > 1
+                
+                if (isBehindCamera) {
+                  markerDiv.style.display = 'none'
+                } else {
+                  markerDiv.style.display = 'flex'
+                  
+                  // Convert NDC to CSS pixels
+                  const x = (screenPos.x * 0.5 + 0.5) * window.innerWidth
+                  const y = (-(screenPos.y * 0.5) + 0.5) * window.innerHeight
+                  
+                  markerDiv.style.left = `${x}px`
+                  markerDiv.style.top = `${y}px`
+                  
+                  // Calculate opacity based on select highlighting
+                  let baseOpacity = 0.8
+                  if (this.hasSelectedHotspot && isCardVisible) {
+                    if (this.activePartKey === key) {
+                      markerDiv.classList.add('active')
+                      markerDiv.classList.remove('dimmed')
+                      baseOpacity = 1.0
+                    } else {
+                      markerDiv.classList.remove('active')
+                      markerDiv.classList.add('dimmed')
+                      baseOpacity = 0.2
+                    }
+                  } else {
+                    markerDiv.classList.remove('active')
+                    markerDiv.classList.remove('dimmed')
+                  }
+                  
+                  markerDiv.style.opacity = baseOpacity * hotspotOpacity
+                }
+              }
+            }
+          }
+        })
+
+        // 4. Update projected screen coordinates for details card and connection line (ray)
+        const svg = document.getElementById('connectorSvg')
+        const line = document.getElementById('connectorLine')
+        const joint = document.getElementById('connectorJoint')
+        
+        if (isCardVisible && this.activePartKey) {
+          const ref = this.hotspots3D.find(h => h.dataset.key === this.activePartKey)
+          if (ref && camera) {
+            const worldPos = new THREE.Vector3()
+            ref.object3D.getWorldPosition(worldPos)
+            
+            worldPos.project(camera)
+            const isBehindCamera = worldPos.z > 1
+            
+            if (isBehindCamera) {
+              if (svg) svg.style.display = 'none'
+              card.style.opacity = '0'
+            } else {
+              if (svg) svg.style.display = 'block'
+              card.style.opacity = '1'
+              
+              const x = (worldPos.x * 0.5 + 0.5) * window.innerWidth
+              const y = (-(worldPos.y * 0.5) + 0.5) * window.innerHeight
+              
+              const isMobile = window.innerWidth <= 500
+              let targetX = x
+              let targetY = y
+              
+              if (isMobile) {
+                const cardRect = card.getBoundingClientRect()
+                targetX = cardRect.left + cardRect.width / 2
+                targetY = cardRect.top
+              } else {
+                const cardWidth = 280
+                const cardHeight = card.offsetHeight || 100
+                
+                let cardX = x + 40
+                let cardY = y - 90
+                
+                cardX = Math.max(20, Math.min(window.innerWidth - cardWidth - 20, cardX))
+                cardY = Math.max(80, Math.min(window.innerHeight - cardHeight - 20, cardY))
+                
+                card.style.left = `${cardX}px`
+                card.style.top = `${cardY}px`
+                card.style.bottom = 'auto'
+                
+                targetX = cardX
+                targetY = cardY + cardHeight / 2
+                
+                if (x > cardX + cardWidth) {
+                  targetX = cardX + cardWidth
+                } else if (x > cardX) {
+                  targetX = x
+                  targetY = cardY + cardHeight
+                }
+              }
+
+              // Calculate start position on the edge of the circle (radius = 14px to clear outer ring)
+              const dx = targetX - x
+              const dy = targetY - y
+              const dist = Math.hypot(dx, dy)
+              let startX = x
+              let startY = y
+              if (dist > 0) {
+                startX = x + (dx / dist) * 14
+                startY = y + (dy / dist) * 14
+              }
+              
+              if (line) {
+                line.setAttribute('x1', startX)
+                line.setAttribute('y1', startY)
+                line.setAttribute('x2', targetX)
+                line.setAttribute('y2', targetY)
+              }
+              if (joint) {
+                joint.setAttribute('cx', startX)
+                joint.setAttribute('cy', startY)
+              }
+            }
+          }
+        } else {
+          if (svg) svg.style.display = 'none'
+        }
       }
     }
+  },
+  showPartDetails(key) {
+    const details = this.partInfo[key]
+    if (!details) return
 
-    if (!this.engineElement) return
+    this.activePartKey = key
 
-    const lerpFactor = 1 - Math.pow(0.05, timeDelta / 1000)
+    const card = document.getElementById('detailsCard')
+    const title = document.getElementById('detailsTitle')
+    const desc = document.getElementById('detailsDesc')
 
-    const prevScale = this._currentScale
-    const prevRotY = this._currentRotY
-
-    this._currentScale += (this._targetScale - this._currentScale) * lerpFactor
-    this._currentRotY += (this._targetRotY - this._currentRotY) * lerpFactor
-
-    if (Math.abs(this._currentScale - prevScale) > 0.0001 ||
-        Math.abs(this._currentRotY - prevRotY) > 0.01) {
-      const s = this._currentScale
-      this.engineElement.object3D.scale.set(s, s, s)
-      this.engineElement.object3D.rotation.y = this._currentRotY * (Math.PI / 180)
+    if (card && title && desc) {
+      title.innerText = details.title
+      desc.innerText = details.desc
+      card.style.display = 'block'
+      card.offsetHeight // Force reflow
+      card.classList.add('show')
     }
+
+    this.hasSelectedHotspot = true
+  },
+  hidePartDetails() {
+    this.activePartKey = null
+
+    const card = document.getElementById('detailsCard')
+    const svg = document.getElementById('connectorSvg')
+    if (card) {
+      card.classList.remove('show')
+      setTimeout(() => {
+        if (!card.classList.contains('show')) {
+          card.style.display = 'none'
+          if (svg) svg.style.display = 'none'
+        }
+      }, 200)
+    }
+
+    this.hasSelectedHotspot = false
   },
 }
