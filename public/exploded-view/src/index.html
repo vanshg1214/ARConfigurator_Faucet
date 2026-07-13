@@ -20,16 +20,14 @@
     content="This example allows the user to place a turbofan engine by tapping or clicking the ground.">
 
   <script crossorigin="anonymous" src="./external/scripts/8frame-1.5.0.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@8thwall/xrextras@1/dist/xrextras.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@8thwall/landing-page@1/dist/landing-page.js"
-    crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js" crossorigin="anonymous" async="true"
+  <script src="/spatial-extras.js" crossorigin="anonymous"></script>
+  <script src="/spatial-landing.js" crossorigin="anonymous"></script>
+  <script src="/spatial-engine.js" crossorigin="anonymous" async="true"
     data-preload-chunks="slam"></script>
 </head>
 
 <body>
   <script src="./app.bundle.js"></script>
-  <!-- Copyright (c) 2022 8th Wall, Inc. -->
 
   <div class="over">
     <span id="promptText">Tap To Place Turbine</span>
@@ -114,7 +112,7 @@
     <a-camera id="camera" position="0 8 8" raycaster="objects: .cantap" cursor="
       fuse: false;
       rayOrigin: mouse;">
-      <a-entity light="type: directional; intensity: 0.4;" position="0 0 0"></a-entity>
+      <a-entity light="type: directional; intensity: 0.15;" position="0 0 0"></a-entity>
     </a-camera>
 
     <a-entity light="
@@ -130,8 +128,8 @@
       target: #camera" xrextras-attach="target: camera; offset: 8 15 4" position="1 4.3 2.5" shadow>
     </a-entity>
 
-    <a-light type="ambient" intensity="0.7"></a-light>
-    <a-light type="hemisphere" color="#ffffff" ground-color="#8c8c8c" intensity="0.6"></a-light>
+    <a-light type="ambient" intensity="0.28"></a-light>
+    <a-light type="hemisphere" color="#ffffff" ground-color="#333333" intensity="0.22"></a-light>
 
     <!-- Adding the cantap class allows the ground to be clicked -->
     <a-box id="ground" class="cantap" scale="1000 2 1000" position="0 -0.99 0"

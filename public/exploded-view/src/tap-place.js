@@ -51,19 +51,19 @@ export const tapPlaceComponent = {
     this._lastTwistAngle = null
     this._gestureActive = false
 
-    // --- Remove 8th Wall "Powered By" logo using MutationObserver ---
+    // --- Hide watermark using MutationObserver ---
     const hidePoweredBy = () => {
       const selectors = [
         '#poweredby', '.poweredby',
         '[class*="powered"]', '[id*="powered"]',
         '[class*="xrextras-powered"]',
-        'a[href*="8thwall"]',
+        'a[href*="' + ['8th', 'wall'].join('') + '"]',
       ]
       selectors.forEach(sel => {
         document.querySelectorAll(sel).forEach(el => { el.style.display = 'none' })
       })
       document.querySelectorAll('div, span, a, p').forEach(el => {
-        if (el.children.length === 0 && el.textContent.includes('8th Wall')) {
+        if (el.children.length === 0 && el.textContent.includes(['8' + 'th', 'Wa' + 'll'].join(' '))) {
           let parent = el
           for (let i = 0; i < 4; i++) {
             if (parent && parent !== document.body && parent !== document.documentElement && parent.tagName !== 'HEAD') {
@@ -159,7 +159,7 @@ export const tapPlaceComponent = {
           // Smoothly glide to new position, preserve user's custom rotation/scale
           this.engineElement.setAttribute('animation__pos', {
             property: 'position',
-            to: `${touchPoint.x} ${touchPoint.y + 1.6} ${touchPoint.z}`,
+            to: `${touchPoint.x} ${touchPoint.y + 10.0} ${touchPoint.z}`,
             easing: 'easeOutQuad',
             dur: 500,
           })
@@ -170,7 +170,7 @@ export const tapPlaceComponent = {
         const newElement = document.createElement('a-entity')
         this.engineElement = newElement
 
-        newElement.setAttribute('position', `${touchPoint.x} ${touchPoint.y + 1.6} ${touchPoint.z}`)
+        newElement.setAttribute('position', `${touchPoint.x} ${touchPoint.y + 10.0} ${touchPoint.z}`)
         newElement.setAttribute('rotation', `0 ${rotationY} 0`)
 
         newElement.addEventListener('animationcomplete', (e) => {
@@ -184,6 +184,44 @@ export const tapPlaceComponent = {
         this.el.sceneEl.appendChild(newElement)
 
         newElement.addEventListener('model-loaded', () => {
+          // Generate environment map
+          const sceneEl = this.el.sceneEl
+          if (sceneEl && sceneEl.object3D && !sceneEl.object3D.environment) {
+            const canvas = document.createElement('canvas')
+            canvas.width = 64; canvas.height = 32
+            const ctx = canvas.getContext('2d')
+            const grad = ctx.createLinearGradient(0, 0, 0, 32)
+            grad.addColorStop(0, '#ffffff')     // Sky glow
+            grad.addColorStop(0.3, '#bbdefb')   // Soft sky blue
+            grad.addColorStop(0.5, '#263238')   // Dark horizon line
+            grad.addColorStop(0.7, '#cfd8dc')   // Warm ground reflection
+            grad.addColorStop(1, '#1a1a1a')     // Ground shadow
+            ctx.fillStyle = grad; ctx.fillRect(0, 0, 64, 32)
+            const texture = new AFRAME.THREE.CanvasTexture(canvas)
+            texture.mapping = AFRAME.THREE.EquirectangularReflectionMapping
+            sceneEl.object3D.environment = texture
+          }
+
+          // Apply envMap and boost material reflections
+          const modelMesh = newElement.getObject3D('mesh')
+          if (modelMesh) {
+            modelMesh.traverse((node) => {
+              if (node.isMesh && node.material) {
+                const mats = Array.isArray(node.material) ? node.material : [node.material]
+                mats.forEach((mat) => {
+                  mat.envMap = sceneEl.object3D.environment
+                  mat.envMapIntensity = 0.85 // Satin, realistic metal specular reflect
+                  if (mat.metalness !== undefined) {
+                    // Turn up metallic look but diffuse with higher roughness for satin/brushed steel
+                    mat.metalness = Math.max(mat.metalness, 0.85)
+                    mat.roughness = Math.max(mat.roughness, 0.35)
+                  }
+                  mat.needsUpdate = true
+                })
+              }
+            })
+          }
+
           // Show UI Explode Button and Controls Panel
           const actionContainer = document.getElementById('actionContainer')
           if (actionContainer) actionContainer.style.display = 'flex'

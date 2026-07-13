@@ -43,26 +43,11 @@ export default function Home() {
 
       {/* Content wrapper */}
       <div style={styles.wrapper}>
-        {/* Header */}
-        <header style={styles.header}>
-          <div style={styles.logoContainer}>
-            <div style={styles.logoIcon}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                <line x1="12" y1="22.08" x2="12" y2="12"></line>
-              </svg>
-            </div>
-            <span style={styles.logoText}>Antigravity AR Labs</span>
-          </div>
-          <span style={styles.headerBadge}>8th Wall Showcase Portfolio</span>
-        </header>
-
         {/* Hero Section */}
         <section style={styles.hero}>
           <h2 style={styles.heroTitle}>WebAR Capabilities</h2>
           <p style={styles.heroSubtitle}>
-            A showcase of advanced web-based augmented reality experiences built with the 8th Wall engine and A-Frame. Navigate through routes to see standalone capabilities designed for commercial and industrial pitches.
+            A showcase of advanced web-based augmented reality experiences built with spatial tracking and A-Frame. Navigate through routes to see standalone capabilities designed for commercial and industrial pitches.
           </p>
         </section>
 
@@ -120,7 +105,7 @@ export default function Home() {
 
         {/* Footer */}
         <footer style={styles.footer}>
-          <p>© {new Date().getFullYear()} Antigravity AR Labs. Built for 8th Wall showcases.</p>
+          <p>© {new Date().getFullYear()} Aether 3D Labs. All rights reserved.</p>
         </footer>
       </div>
     </div>

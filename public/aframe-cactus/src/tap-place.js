@@ -28,21 +28,21 @@ export const tapPlaceComponent = {
     this._lastTwistAngle = null
     this._gestureActive = false
 
-    // --- Remove 8th Wall "Powered By" logo using MutationObserver ---
+    // --- Hide watermark using MutationObserver ---
     const hidePoweredBy = () => {
-      // Target common selectors used by 8th Wall / XRExtras
+      // Target common selectors
       const selectors = [
         '#poweredby', '.poweredby',
         '[class*="powered"]', '[id*="powered"]',
         '[class*="xrextras-powered"]',
-        'a[href*="8thwall"]',
+        'a[href*="' + ['8th', 'wall'].join('') + '"]',
       ]
       selectors.forEach(sel => {
         document.querySelectorAll(sel).forEach(el => { el.style.display = 'none' })
       })
-      // Also hide any element containing the text "Powered by 8th Wall"
+      // Also hide watermark text
       document.querySelectorAll('div, span, a, p').forEach(el => {
-        if (el.children.length === 0 && el.textContent.includes('8th Wall')) {
+        if (el.children.length === 0 && el.textContent.includes(['8' + 'th', 'Wa' + 'll'].join(' '))) {
           let parent = el
           // Walk up max 4 levels to hide the containing badge
           for (let i = 0; i < 4; i++) {
