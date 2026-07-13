@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, Suspense } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -38,10 +38,17 @@ const XR8PipelineModule = () => {
   return null;
 };
 
-export default function XRCanvas({ children }: { children: (hitPosition: THREE.Vector3 | null) => React.ReactNode }) {
+export default function XRCanvas({ 
+  children,
+  hitPosition,
+  setHitPosition
+}: { 
+  children: React.ReactNode,
+  hitPosition: THREE.Vector3 | null,
+  setHitPosition: (pos: THREE.Vector3) => void
+}) {
   const [xrReady, setXrReady] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [hitPosition, setHitPosition] = useState<THREE.Vector3 | null>(null);
 
   // Wait for 8th Wall to load
   useEffect(() => {
@@ -58,13 +65,26 @@ export default function XRCanvas({ children }: { children: (hitPosition: THREE.V
   useEffect(() => {
     if (xrReady && canvasRef.current) {
       const XR8 = (window as any).XR8;
+      
+      // Add required camera pipeline modules
+      XR8.addCameraPipelineModules([
+        XR8.GlTextureRenderer.pipelineModule(), // Renders the camera feed to the canvas
+        XR8.XrController.pipelineModule(),      // Enables SLAM tracking and hit testing
+        (window as any).XRExtras.FullWindowCanvas.pipelineModule(), // Handles canvas sizing and simulator features
+        (window as any).XRExtras.Loading.pipelineModule(),      // Handles loading screen and desktop simulator UI
+        (window as any).XRExtras.RuntimeError.pipelineModule(), // Handles camera permissions errors
+      ]);
+
       XR8.run({
         canvas: canvasRef.current,
         allowedDevices: XR8.XrConfig.device.ANY,
       });
     }
     return () => {
-      if ((window as any).XR8) (window as any).XR8.stop();
+      if ((window as any).XR8) {
+        (window as any).XR8.stop();
+        (window as any).XR8.clearCameraPipelineModules();
+      }
     };
   }, [xrReady]);
 
@@ -107,8 +127,10 @@ export default function XRCanvas({ children }: { children: (hitPosition: THREE.V
       {/* React Three Fiber Scene Overlay */}
       {xrReady && (
         <Canvas style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }} gl={{ alpha: true }}>
-          <XR8PipelineModule />
-          {children(hitPosition)}
+          <Suspense fallback={null}>
+            <XR8PipelineModule />
+            {children}
+          </Suspense>
         </Canvas>
       )}
       {!xrReady && (

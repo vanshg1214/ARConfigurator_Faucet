@@ -2,9 +2,14 @@
   "name": "my-app",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "public/aframe-cactus",
+    "public/configurator",
+    "public/exploded-view"
+  ],
   "scripts": {
     "dev": "next dev",
-    "build": "cd public/aframe-cactus && npm install --production=false && npm run build && cd ../.. && next build",
+    "build": "npm run build --workspaces --if-present && next build",
     "start": "next start",
     "lint": "eslint"
   },

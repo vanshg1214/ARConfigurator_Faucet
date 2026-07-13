@@ -1,0 +1,240 @@
+/* Style for "Tap To Place Model" text overlay */
+.over {
+  z-index: 10;
+  pointer-events: none;
+  position:absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  
+  text-align: center;
+  color: white;
+  font-family: 'Nunito', monospace;
+  text-shadow: 0px 0px 5px black;
+}
+#promptText {
+  font-size: 2em;
+  bottom: 12vh;
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, 0);
+}
+
+.button-container {
+  position: absolute;
+  bottom: 8vh;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 24px;
+  z-index: 20;
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.sphere-btn {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 
+    0 6px 12px rgba(0,0,0,0.4), 
+    inset 0 4px 8px rgba(255,255,255,0.7), 
+    inset 0 -6px 12px rgba(0,0,0,0.6);
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.2s;
+  pointer-events: auto;
+}
+
+.sphere-btn:active {
+  transform: scale(0.92);
+  box-shadow: 
+    0 2px 5px rgba(0,0,0,0.5), 
+    inset 0 4px 8px rgba(255,255,255,0.7), 
+    inset 0 -6px 12px rgba(0,0,0,0.6);
+}
+
+.gold-btn {
+  background: radial-gradient(circle at 35% 25%, #ffffff 0%, #ffdf70 20%, #d4af37 50%, #886622 80%, #3a2608 100%);
+}
+
+.silver-btn {
+  background: radial-gradient(circle at 35% 25%, #ffffff 0%, #f0f0f0 20%, #cccccc 50%, #888888 80%, #333333 100%);
+}
+
+.black-btn {
+  background: radial-gradient(circle at 35% 25%, #999999 0%, #444444 25%, #1a1a1a 60%, #000000 100%);
+}
+
+/* Premium Action Button Styles */
+.action-container {
+  position: absolute;
+  bottom: 8vh;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 28px;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  color: #fff;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+  pointer-events: auto; /* Re-enable clicks */
+  overflow: hidden;
+  position: relative;
+}
+
+.action-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 50%; height: 100%;
+  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%);
+  transform: skewX(-25deg);
+  animation: shine 5s infinite;
+}
+
+@keyframes shine {
+  0% { left: -100%; }
+  20% { left: 200%; }
+  100% { left: 200%; }
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  transform: translateY(-1px);
+}
+
+.action-btn:active {
+  transform: translateY(1px) scale(0.97);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.action-btn.active {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.15), 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.action-btn.active:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.9);
+  color: #0f172a;
+}
+
+/* Hide 8th Wall watermark - all known selectors */
+#poweredby, .poweredby,
+[class*="powered-by"], [class*="poweredBy"],
+[id*="powered"], [class*="xrextras-powered"],
+a[href*="8thwall.com"], a[href*="8thwall.io"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Glassmorphic Controls Panel */
+.controls-panel {
+  position: absolute;
+  top: 75px;
+  right: 10px;
+  width: 250px;
+  max-height: 80vh;
+  overflow-y: auto;
+  z-index: 20;
+  padding: 14px;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  color: #f8fafc;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  pointer-events: auto;
+}
+
+.panel-title {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 6px;
+  color: #38bdf8;
+}
+
+.control-group {
+  margin-bottom: 10px;
+}
+
+.control-group label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.control-group input[type="range"] {
+  width: 100%;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.15);
+  height: 6px;
+  border-radius: 3px;
+  outline: none;
+}
+
+.control-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #38bdf8;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 6px rgba(0,0,0,0.5);
+  transition: background 0.15s;
+}
+
+.control-group input[type="range"]::-webkit-slider-thumb:hover {
+  background: #0ea5e9;
+}

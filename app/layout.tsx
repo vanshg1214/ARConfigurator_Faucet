@@ -1,16 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -25,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <Script
           src="https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js"
@@ -33,8 +22,13 @@ export default function RootLayout({
           crossOrigin="anonymous"
           data-preload-chunks="slam"
         />
+        <Script
+          src="https://cdn.jsdelivr.net/npm/@8thwall/xrextras@1/dist/xrextras.js"
+          strategy="beforeInteractive"
+          crossOrigin="anonymous"
+        />
       </head>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>{children}</body>
     </html>
   );
 }
