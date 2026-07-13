@@ -16,20 +16,20 @@ export default function ARWrapper({ src, title, description, features }: ARWrapp
   return (
     <div style={styles.container}>
       {/* Floating Header */}
-      <header style={styles.header}>
-        <div style={styles.headerLeft}>
-          <Link href="/" style={styles.backButton}>
+      <header className="ar-header" style={styles.header}>
+        <div className="ar-header-left" style={styles.headerLeft}>
+          <Link href="/" className="ar-back-button" style={styles.backButton}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="19" y1="12" x2="5" y2="12"></line>
               <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
             <span>Back</span>
           </Link>
-          <div style={styles.divider}></div>
-          <h1 style={styles.title}>{title}</h1>
+          <div className="ar-divider" style={styles.divider}></div>
+          <h1 className="ar-title" style={styles.title}>{title}</h1>
         </div>
-        <div style={styles.headerRight}>
-          <span style={styles.badge}>WebAR Experience</span>
+        <div className="ar-header-right" style={styles.headerRight}>
+          <span className="ar-badge" style={styles.badge}>WebAR Experience</span>
           {/* Guide icon hidden for now */}
           {/* <button style={styles.infoToggle} onClick={() => setShowInfo(!showInfo)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -221,3 +221,36 @@ a {
   transform: translateX(6px);
 }
 
+/* Responsive Header Overrides for Mobile WebAR */
+@media (max-width: 768px) {
+  .ar-header {
+    height: 48px !important;
+    top: 8px !important;
+    left: 8px !important;
+    right: 8px !important;
+    padding: 0 12px !important;
+    border-radius: 12px !important;
+  }
+  .ar-badge {
+    display: none !important; /* Hide badge on mobile to save width */
+  }
+  .ar-title {
+    font-size: 13px !important;
+    max-width: 170px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .ar-divider {
+    height: 18px !important;
+    margin: 0 8px !important;
+  }
+  .ar-back-button {
+    font-size: 12px !important;
+  }
+  .ar-back-button svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+}
+
