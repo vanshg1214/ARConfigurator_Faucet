@@ -3,14 +3,15 @@
 
 export const tapPlaceComponent = {
   schema: {
-    min: {default: 0.05},
-    max: {default: 5.0},
+    min: { default: 0.05 },
+    max: { default: 5.0 },
   },
   init() {
     this.prompt = document.getElementById('promptText')
     this.engineElement = null
     this.isExploded = false
     this.explosionNodes = []
+
 
     this.sliderOffsets = {
       tube_front: -6.40,
@@ -36,8 +37,14 @@ export const tapPlaceComponent = {
     }
     this.sliderElements = {}
     this.displayElements = {}
-    this.explodeProgress = 0.0
-    this.transitionDuration = 1800 // 1.8 seconds for an ultra-premium, slow ease-in-out transition
+    this.explodeProgress = 1.0 // Initialize at 1.0 so it auto-assembles on spawn
+    this.transitionDuration = 7500.0 // Ultra slow for initial placement assembly
+    this.isInitialAssemble = true
+
+    this.isExploded = false
+    this.bladeSpinVelocity = 0.0
+    this.targetBladeSpinVelocity = 0.0
+    this.bladeRotationAngle = 0.0
 
     this.hotspots = []
     this.hasSelectedHotspot = false
@@ -188,6 +195,14 @@ export const tapPlaceComponent = {
       const g = document.getElementById('ground')
       if (!g) { setTimeout(attachListener, 100); return; }
 
+      const spinCheckbox = document.getElementById('spinToggleCheckbox')
+      if (spinCheckbox) {
+        spinCheckbox.addEventListener('change', (e) => {
+          // Target velocity: ~1.5 rotations per second (approx 9.4 radians/sec) when ON
+          this.targetBladeSpinVelocity = e.target.checked ? 10.0 : 0.0
+        })
+      }
+
       g.addEventListener('click', (event) => {
         const card = document.getElementById('detailsCard')
         if (card && card.style.display === 'block' && card.classList.contains('show')) return
@@ -209,7 +224,7 @@ export const tapPlaceComponent = {
           // Smoothly glide to new position, preserve user's custom rotation/scale
           this.engineElement.setAttribute('animation__pos', {
             property: 'position',
-            to: `${touchPoint.x} ${touchPoint.y} ${touchPoint.z}`,
+            to: `${touchPoint.x} ${touchPoint.y + 2.0} ${touchPoint.z}`,
             easing: 'easeOutQuad',
             dur: 500,
           })
@@ -220,7 +235,7 @@ export const tapPlaceComponent = {
         const newElement = document.createElement('a-entity')
         this.engineElement = newElement
 
-        newElement.setAttribute('position', `${touchPoint.x} ${touchPoint.y} ${touchPoint.z}`)
+        newElement.setAttribute('position', `${touchPoint.x} ${touchPoint.y + 2.0} ${touchPoint.z}`)
         newElement.setAttribute('rotation', `0 ${rotationY} 0`)
 
         newElement.addEventListener('animationcomplete', (e) => {
@@ -253,7 +268,7 @@ export const tapPlaceComponent = {
           this.hotspotHTMLs = []
           const container = document.getElementById('hotspotMarkersContainer')
           const keys = ['tube_front', 'blades', 'turbine_hull', 'turbine_hull_middle', 'electronics_side', 'flaps', 'plates_back', 'fins_outside', 'containers']
-          
+
           keys.forEach(key => {
             // 3D Reference point (dummy invisible entity)
             const refEl = document.createElement('a-entity')
@@ -261,18 +276,19 @@ export const tapPlaceComponent = {
             refEl.dataset.key = key
             this.el.sceneEl.appendChild(refEl)
             this.hotspots3D.push(refEl)
-            
+
             // HTML Marker Button
             const markerDiv = document.createElement('div')
             markerDiv.className = 'hotspot-marker'
+            markerDiv.innerText = 'i'
             markerDiv.style.display = 'none'
             markerDiv.dataset.key = key
-            
+
             markerDiv.addEventListener('click', (e) => {
               e.stopPropagation()
               this.showPartDetails(key)
             })
-            
+
             if (container) {
               container.appendChild(markerDiv)
             }
@@ -320,7 +336,7 @@ export const tapPlaceComponent = {
           // Show UI Explode Button and Controls Panel
           const actionContainer = document.getElementById('actionContainer')
           if (actionContainer) actionContainer.style.display = 'flex'
-          
+
           const controlsPanel = document.getElementById('controlsPanel')
           if (controlsPanel) controlsPanel.style.display = 'none'
 
@@ -350,10 +366,10 @@ export const tapPlaceComponent = {
                 const val = parseFloat(e.target.value)
                 this.sliderOffsets[key] = val
                 this.currentOffsets[key] = val
-                
+
                 // Snap transition to fully exploded for instant response
                 this.explodeProgress = 1.0
-                
+
                 // Auto-trigger Explode UI state on manual slider drag
                 if (!this.isExploded) {
                   this.isExploded = true
@@ -402,6 +418,9 @@ export const tapPlaceComponent = {
                   key = 'fins_outside'
                 } else if (name.includes('container')) {
                   key = 'containers'
+                } else if (name === 'tube' || name === 'tube_0' || name === 'tube_middle' || name === 'tube_middle_0' || name === 'fins' || name === 'fins_0') {
+                  // Internal shaft/spool parts that don't explode but should spin
+                  key = 'center_shaft'
                 }
 
                 if (!key) {
@@ -425,6 +444,7 @@ export const tapPlaceComponent = {
                 node.matrixAutoUpdate = true
 
                 node.userData.originalLocalPos = node.position.clone()
+                node.userData.originalLocalRot = node.rotation.clone()
                 node.userData.key = key
 
                 this.explosionNodes.push(node)
@@ -464,7 +484,7 @@ export const tapPlaceComponent = {
 
         // Hide details card if we are assembling back
         if (!this.isExploded) {
-            this.hidePartDetails()
+          this.hidePartDetails()
         }
       })
     }
@@ -492,21 +512,37 @@ export const tapPlaceComponent = {
       this._currentRotY += (this._targetRotY - this._currentRotY) * lerpFactor
 
       if (Math.abs(this._currentScale - prevScale) > 0.0001 ||
-          Math.abs(this._currentRotY - prevRotY) > 0.01) {
+        Math.abs(this._currentRotY - prevRotY) > 0.01) {
         const s = this._currentScale
         this.engineElement.object3D.scale.set(s, s, s)
         this.engineElement.object3D.rotation.y = this._currentRotY * (Math.PI / 180)
       }
     }
 
-    // 2. Exploded view calculations
+    // 2. Continuous Spin Update for Blades
+    const spinAccel = 0.02 * timeDelta // Slow ramp-up acceleration
+    if (this.bladeSpinVelocity < this.targetBladeSpinVelocity) {
+      this.bladeSpinVelocity = Math.min(this.targetBladeSpinVelocity, this.bladeSpinVelocity + spinAccel)
+    } else if (this.bladeSpinVelocity > this.targetBladeSpinVelocity) {
+      this.bladeSpinVelocity = Math.max(this.targetBladeSpinVelocity, this.bladeSpinVelocity - spinAccel)
+    }
+
+    // Add to continuous rotation angle
+    this.bladeRotationAngle += this.bladeSpinVelocity * (timeDelta / 1000)
+
+    // 3. Exploded view calculations
     if (this.explosionNodes && this.explosionNodes.length > 0 && this.engineElement) {
-      // Update global transition progress
       const rate = timeDelta / this.transitionDuration
       if (this.isExploded) {
         this.explodeProgress = Math.min(1.0, this.explodeProgress + rate)
       } else {
         this.explodeProgress = Math.max(0.0, this.explodeProgress - rate)
+      }
+
+      // Once the initial assembly finishes, reset transition speed for future interactions
+      if (!this.isExploded && this.isInitialAssemble && this.explodeProgress === 0.0) {
+        this.isInitialAssemble = false
+        this.transitionDuration = 4500.0
       }
 
       // Quintic Ease-in-out formula
@@ -515,14 +551,30 @@ export const tapPlaceComponent = {
       }
 
       const t = easeInOutQuint(this.explodeProgress)
-      
+
       // Update animated offsets and sliders
       const keys = ['tube_front', 'blades', 'turbine_hull', 'turbine_hull_middle', 'electronics_side', 'flaps', 'plates_back', 'fins_outside', 'containers']
-      keys.forEach(key => {
+      keys.forEach((key, index) => {
+        // Calculate staggered progress
+        // Total sequence has 9 parts. We delay each part slightly.
+        const staggerDelay = index * 0.09; // Increased delay for more dramatic staggering
+        const partDuration = 0.35; // Each part takes 35% of the total 1.0 progress time
+        
+        let partProgress = (this.explodeProgress - staggerDelay) / partDuration;
+        partProgress = Math.max(0.0, Math.min(1.0, partProgress));
+        
+        const t = easeInOutQuint(partProgress)
+
         if (this.explodeProgress < 1.0 || !this.isExploded) {
           this.currentOffsets[key] = t * this.sliderOffsets[key]
         }
-        
+
+        // Store partProgress in userData so we can use it for rotation later
+        const node = this.explosionNodes.find(n => n.userData.key === key)
+        if (node) {
+          node.userData.partProgress = partProgress;
+        }
+
         const sliderEl = this.sliderElements[key]
         const displayEl = this.displayElements[key]
         if (sliderEl) sliderEl.value = this.currentOffsets[key]
@@ -541,7 +593,7 @@ export const tapPlaceComponent = {
           if (node.parent) {
             const key = node.userData.key
             const offset = this.currentOffsets[key]
-            
+
             const originalWorldPos = node.userData.originalLocalPos.clone().applyMatrix4(node.parent.matrixWorld)
             const targetWorldPos = originalWorldPos.clone().addScaledVector(worldDir, offset)
 
@@ -549,12 +601,31 @@ export const tapPlaceComponent = {
             node.parent.worldToLocal(targetLocalPos)
 
             node.position.copy(targetLocalPos)
+
+            // Linear mechanical rotation along Z-axis (ignores the ease curve)
+            // Based on its max offset distance, map it to a rotation amount
+            // We use the staggered partProgress for a linear feel
+            const maxOffset = this.sliderOffsets[key] || 0
+            const maxRotZ = maxOffset * 0.8 // Spin amount scales with distance traveled
+            const partProgress = node.userData.partProgress !== undefined ? node.userData.partProgress : this.explodeProgress
+            let linearRotZ = partProgress * maxRotZ
+
+            node.rotation.copy(node.userData.originalLocalRot)
+            node.rotation.z += linearRotZ
+
+            // Apply continuous test spin if it's the blades or center shaft
+            if (key === 'blades' || key === 'center_shaft') {
+              // Use rotateY to apply rotation in local quaternion space and prevent wobbling/gimbal lock
+              node.rotateY(-this.bladeRotationAngle)
+            }
+
             node.updateMatrix()
           }
         })
 
         // 3. Update hotspots (opacity, visibility, and screen projection)
-        const hotspotOpacity = Math.max(0.0, Math.min(1.0, (this.explodeProgress - 0.25) * 1.6))
+        // Wait until parts are in their final place (explodeProgress > 0.95) before showing
+        const hotspotOpacity = this.explodeProgress > 0.95 ? Math.max(0.0, Math.min(1.0, (this.explodeProgress - 0.95) * 20)) : 0.0
         const camera = this.el.sceneEl.camera
         const card = document.getElementById('detailsCard')
         const isCardVisible = card && card.style.display === 'block' && card.classList.contains('show')
@@ -572,32 +643,36 @@ export const tapPlaceComponent = {
             if (node) {
               const worldPos = new THREE.Vector3()
               node.getWorldPosition(worldPos)
-              
+
               const localOffset = this.hotspotOffsets[key] || new THREE.Vector3(0, 1.2, 0)
-              const worldOffset = localOffset.clone().applyQuaternion(node.getWorldQuaternion(new THREE.Quaternion()))
+
+              // Apply offset based on the overall engine's rotation, NOT the specific rotating node's rotation,
+              // so that the 'i' button stays hovered above the part and doesn't orbit around it as it spins.
+              const engineQuat = this.engineElement.object3D.getWorldQuaternion(new THREE.Quaternion())
+              const worldOffset = localOffset.clone().applyQuaternion(engineQuat)
               worldPos.add(worldOffset)
-              
+
               ref.object3D.position.copy(worldPos)
-              
+
               // Project to 2D Screen
               if (camera) {
                 const screenPos = worldPos.clone()
                 screenPos.project(camera)
-                
+
                 const isBehindCamera = screenPos.z > 1
-                
+
                 if (isBehindCamera) {
                   markerDiv.style.display = 'none'
                 } else {
                   markerDiv.style.display = 'flex'
-                  
+
                   // Convert NDC to CSS pixels
                   const x = (screenPos.x * 0.5 + 0.5) * window.innerWidth
                   const y = (-(screenPos.y * 0.5) + 0.5) * window.innerHeight
-                  
+
                   markerDiv.style.left = `${x}px`
                   markerDiv.style.top = `${y}px`
-                  
+
                   // Calculate opacity based on select highlighting
                   let baseOpacity = 0.8
                   if (this.hasSelectedHotspot && isCardVisible) {
@@ -614,7 +689,7 @@ export const tapPlaceComponent = {
                     markerDiv.classList.remove('active')
                     markerDiv.classList.remove('dimmed')
                   }
-                  
+
                   markerDiv.style.opacity = baseOpacity * hotspotOpacity
                 }
               }
@@ -626,30 +701,30 @@ export const tapPlaceComponent = {
         const svg = document.getElementById('connectorSvg')
         const line = document.getElementById('connectorLine')
         const joint = document.getElementById('connectorJoint')
-        
+
         if (isCardVisible && this.activePartKey) {
           const ref = this.hotspots3D.find(h => h.dataset.key === this.activePartKey)
           if (ref && camera) {
             const worldPos = new THREE.Vector3()
             ref.object3D.getWorldPosition(worldPos)
-            
+
             worldPos.project(camera)
             const isBehindCamera = worldPos.z > 1
-            
+
             if (isBehindCamera) {
               if (svg) svg.style.display = 'none'
               card.style.opacity = '0'
             } else {
               if (svg) svg.style.display = 'block'
               card.style.opacity = '1'
-              
+
               const x = (worldPos.x * 0.5 + 0.5) * window.innerWidth
               const y = (-(worldPos.y * 0.5) + 0.5) * window.innerHeight
-              
+
               const isMobile = window.innerWidth <= 500
               let targetX = x
               let targetY = y
-              
+
               if (isMobile) {
                 const cardRect = card.getBoundingClientRect()
                 targetX = cardRect.left + cardRect.width / 2
@@ -657,20 +732,20 @@ export const tapPlaceComponent = {
               } else {
                 const cardWidth = 280
                 const cardHeight = card.offsetHeight || 100
-                
+
                 let cardX = x + 40
                 let cardY = y - 90
-                
+
                 cardX = Math.max(20, Math.min(window.innerWidth - cardWidth - 20, cardX))
                 cardY = Math.max(80, Math.min(window.innerHeight - cardHeight - 20, cardY))
-                
+
                 card.style.left = `${cardX}px`
                 card.style.top = `${cardY}px`
                 card.style.bottom = 'auto'
-                
+
                 targetX = cardX
                 targetY = cardY + cardHeight / 2
-                
+
                 if (x > cardX + cardWidth) {
                   targetX = cardX + cardWidth
                 } else if (x > cardX) {
@@ -689,7 +764,7 @@ export const tapPlaceComponent = {
                 startX = x + (dx / dist) * 14
                 startY = y + (dy / dist) * 14
               }
-              
+
               if (line) {
                 line.setAttribute('x1', startX)
                 line.setAttribute('y1', startY)
@@ -721,6 +796,12 @@ export const tapPlaceComponent = {
     if (card && title && desc) {
       title.innerText = details.title
       desc.innerText = details.desc
+
+      const spinToggleContainer = document.getElementById('spinToggleContainer')
+      if (spinToggleContainer) {
+        spinToggleContainer.style.display = key === 'blades' ? 'flex' : 'none'
+      }
+
       card.style.display = 'block'
       card.offsetHeight // Force reflow
       card.classList.add('show')
@@ -733,6 +814,12 @@ export const tapPlaceComponent = {
 
     const card = document.getElementById('detailsCard')
     const svg = document.getElementById('connectorSvg')
+
+    // Reset spin if open
+    this.targetBladeSpinVelocity = 0.0
+    const spinCheckbox = document.getElementById('spinToggleCheckbox')
+    if (spinCheckbox) spinCheckbox.checked = false
+
     if (card) {
       card.classList.remove('show')
       setTimeout(() => {

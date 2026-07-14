@@ -98,69 +98,61 @@
   align-items: center;
   gap: 12px;
   padding: 14px 32px;
-  background: linear-gradient(135deg, rgba(20, 30, 48, 0.7), rgba(36, 59, 85, 0.7));
+  background: linear-gradient(135deg, rgba(12, 12, 12, 0.65), rgba(26, 26, 26, 0.65));
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-radius: 50px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px 0 rgba(0, 0, 0, 0.4), 
+    inset 0 1px 2px rgba(255, 255, 255, 0.05);
   color: #fff;
-  font-family: 'Nunito', sans-serif;
-  font-size: 15px;
-  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 2.5px;
   cursor: pointer;
   outline: none;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  pointer-events: auto; /* Re-enable clicks */
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
   overflow: hidden;
   position: relative;
 }
 
-.action-btn::before {
-  content: '';
-  position: absolute;
-  top: 0; left: -100%;
-  width: 50%; height: 100%;
-  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
-  transform: skewX(-25deg);
-  animation: shine 4s infinite;
-}
-
-@keyframes shine {
-  0% { left: -100%; }
-  20% { left: 200%; }
-  100% { left: 200%; }
-}
-
 .action-btn:hover {
-  background: linear-gradient(135deg, rgba(25, 38, 60, 0.85), rgba(42, 69, 100, 0.85));
-  border-color: rgba(56, 189, 248, 0.6);
-  box-shadow: 0 10px 40px rgba(56, 189, 248, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  background: rgba(12, 12, 12, 0.85);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 
+    0 10px 40px rgba(255, 255, 255, 0.25), 
+    inset 0 1px 2px rgba(255, 255, 255, 0.1);
   transform: translateY(-2px);
 }
 
 .action-btn:active {
-  transform: translateY(1px) scale(0.96);
-  box-shadow: 0 4px 16px rgba(56, 189, 248, 0.2);
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .action-btn.active {
-  background: linear-gradient(135deg, #f8fafc, #ffffff);
+  background: linear-gradient(135deg, #ffffff, #e2e8f0);
   border-color: #ffffff;
-  color: #0f172a;
-  box-shadow: 0 8px 32px rgba(255, 255, 255, 0.25), 0 4px 12px rgba(0, 0, 0, 0.2);
+  color: #1a1a1a;
+  box-shadow: 
+    0 8px 32px rgba(255, 255, 255, 0.3), 
+    0 0 15px rgba(255, 255, 255, 0.3);
 }
 
 .action-btn.active:hover {
   background: #ffffff;
   transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(255, 255, 255, 0.4);
+  box-shadow: 
+    0 12px 40px rgba(255, 255, 255, 0.4),
+    0 0 20px rgba(255, 255, 255, 0.4);
 }
 
 .action-btn svg {
-  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .action-btn.active svg {
@@ -187,15 +179,17 @@ a[href*="8thwall.com"], a[href*="8thwall.io"] {
   max-height: 80vh;
   overflow-y: auto;
   z-index: 20;
-  padding: 14px;
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  padding: 18px;
+  background: rgba(12, 12, 12, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 10px 30px rgba(0, 0, 0, 0.4),
+    0 0 15px rgba(255, 255, 255, 0.05);
   color: #f8fafc;
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   pointer-events: auto;
 }
@@ -203,13 +197,14 @@ a[href*="8thwall.com"], a[href*="8thwall.io"] {
 .panel-title {
   margin-top: 0;
   margin-bottom: 12px;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1.5px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 6px;
-  color: #38bdf8;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
 .control-group {
@@ -219,33 +214,36 @@ a[href*="8thwall.com"], a[href*="8thwall.io"] {
 .control-group label {
   display: block;
   margin-bottom: 4px;
-  font-weight: 600;
-  color: #cbd5e1;
+  font-weight: 500;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
 }
 
 .control-group input[type="range"] {
   width: 100%;
   -webkit-appearance: none;
-  background: rgba(255, 255, 255, 0.15);
-  height: 6px;
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  height: 4px;
+  border-radius: 2px;
   outline: none;
 }
 
 .control-group input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  background: #38bdf8;
+  background: #ffffff;
   cursor: pointer;
-  border: 2px solid #ffffff;
-  box-shadow: 0 0 6px rgba(0,0,0,0.5);
-  transition: background 0.15s;
+  border: 1px solid #ffffff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+  transition: all 0.15s;
 }
 
 .control-group input[type="range"]::-webkit-slider-thumb:hover {
-  background: #0ea5e9;
+  background: #ffffff;
+  transform: scale(1.15);
+  box-shadow: 0 0 12px #ffffff;
 }
 
 /* Responsive Overrides for Mobile AR View */
@@ -276,21 +274,24 @@ a[href*="8thwall.com"], a[href*="8thwall.io"] {
   width: 320px;
   max-height: 85vh;
   overflow-y: auto;
-  padding: 24px;
-  background: linear-gradient(145deg, rgba(15, 15, 15, 0.85), rgba(0, 0, 0, 0.95));
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-left: 4px solid #ffffff;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  padding: 24px 28px;
+  box-sizing: border-box;
+  background: rgba(12, 12, 12, 0.55);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 
+    0 30px 60px rgba(0, 0, 0, 0.6), 
+    inset 0 1px 1px rgba(255, 255, 255, 0.10),
+    0 0 20px rgba(255, 255, 255, 0.1);
   color: #f8fafc;
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Inter', sans-serif;
   z-index: 30;
   pointer-events: auto;
   opacity: 0;
   transform: scale(0.9) translateY(10px);
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .details-card-projected.show {
@@ -311,16 +312,16 @@ a[href*="8thwall.com"], a[href*="8thwall.io"] {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .details-card-projected .close-details-btn svg {
-  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .details-card-projected .close-details-btn:hover {
   background: transparent;
-  color: #fff;
+  color: #ffffff;
   transform: scale(1.15);
 }
 
@@ -329,23 +330,104 @@ a[href*="8thwall.com"], a[href*="8thwall.io"] {
 }
 
 .details-card-projected .details-title {
-  margin: 0 0 10px 0;
-  font-size: 16px;
-  font-weight: 800;
-  background: linear-gradient(90deg, #ffffff, #aaaaaa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: #ffffff;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 4px;
+}
+
+.details-card-projected.show .details-title {
+  animation: hologramTextEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes hologramTextEntrance {
+  0% {
+    opacity: 0;
+    filter: blur(4px);
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    text-shadow: 0 0 4px rgba(255, 255, 255, 0.2);
+    transform: translateY(0);
+  }
 }
 
 .details-card-projected .details-desc {
   margin: 0;
   font-size: 13.5px;
-  line-height: 1.6;
-  color: #cccccc;
-  font-weight: 400;
-  letter-spacing: 0.3px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 300;
+  letter-spacing: 0.5px;
+}
+
+/* Premium Spin Toggle */
+.spin-toggle-container {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding-top: 16px;
+}
+
+.spin-label {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+  letter-spacing: 2px;
+}
+
+.premium-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.premium-switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.premium-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: .4s;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.premium-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #ffffff;
+  transition: .4s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+}
+
+input:checked + .premium-slider {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-color: #ffffff;
+}
+
+input:checked + .premium-slider:before {
+  transform: translateX(20px);
+  background-color: #ffffff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
 }
 
 /* On screens smaller than 500px, make the card float centered at the bottom of the viewport to maximize readability */
@@ -354,11 +436,11 @@ a[href*="8thwall.com"], a[href*="8thwall.io"] {
     width: 90% !important;
     left: 5% !important;
     bottom: max(14vh, 100px) !important;
-    top: auto !important; /* Ignore top projection */
+    top: auto !important;
     max-height: 65vh !important;
     overflow-y: auto !important;
     transform: translateY(20px) !important;
-    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .details-card-projected.show {
     transform: translateY(0) !important;
@@ -368,25 +450,51 @@ a[href*="8thwall.com"], a[href*="8thwall.io"] {
 /* Hotspot Overlay Markers */
 .hotspot-marker {
   position: absolute;
-  width: 25px;
-  height: 25px;
-  background: rgba(10, 10, 10, 0.85); /* Sleek black bg */
-  border: 1.5px solid #ffffff; /* Crisp white outline */
+  width: 24px;
+  height: 24px;
+  background: rgba(12, 12, 12, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 50%;
   color: #ffffff;
-  font-family: 'Nunito', sans-serif;
-  font-size: 12px;
-  font-weight: 800;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transform: translate(-50%, -50%) scale(1);
-  pointer-events: auto; /* Clickable */
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-  transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+  pointer-events: auto;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* Holographic sonar pulse ring */
+.hotspot-marker::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  animation: sonarRipple 2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+@keyframes sonarRipple {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
 }
 
 /* Invisible expanded hit area for easy clicking */
@@ -399,12 +507,6 @@ a[href*="8thwall.com"], a[href*="8thwall.io"] {
   bottom: -12px;
 }
 
-.hotspot-marker::before {
-  content: 'i';
-  display: block;
-  line-height: 1;
-}
-
 /* Pulse effect for unselected hotspots */
 .hotspot-marker:not(.active) {
   animation: hotspotPulse 2s infinite ease-in-out;
@@ -412,25 +514,25 @@ a[href*="8thwall.com"], a[href*="8thwall.io"] {
 
 @keyframes hotspotPulse {
   0% {
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
     transform: translate(-50%, -50%) scale(1);
   }
   50% {
-    box-shadow: 0 0 18px rgba(255, 255, 255, 0.6);
-    transform: translate(-50%, -50%) scale(1.08);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%) scale(1.05);
   }
   100% {
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
     transform: translate(-50%, -50%) scale(1);
   }
 }
 
 .hotspot-marker:hover, .hotspot-marker.active {
   background-color: #ffffff;
-  color: #0f172a;
+  color: #050505;
   border-color: #ffffff;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
-  transform: translate(-50%, -50%) scale(1.15) !important;
+  box-shadow: 0 0 25px #ffffff;
+  transform: translate(-50%, -50%) scale(1.1) !important;
   animation: none;
 }
 
@@ -438,3 +540,18 @@ a[href*="8thwall.com"], a[href*="8thwall.io"] {
   opacity: 0.15 !important;
   pointer-events: none;
 }
+
+/* Holographic Laser Connector Line */
+#connectorLine {
+  stroke: #ffffff !important;
+  stroke-width: 1.5 !important;
+  stroke-dasharray: 6 4 !important;
+  animation: laserLineFlow 0.8s linear infinite !important;
+}
+
+@keyframes laserLineFlow {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+

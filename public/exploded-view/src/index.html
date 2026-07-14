@@ -19,6 +19,10 @@
   <meta name="twitter:description"
     content="This example allows the user to place a turbofan engine by tapping or clicking the ground.">
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+
   <script crossorigin="anonymous" src="./external/scripts/8frame-1.5.0.min.js"></script>
   <script src="/spatial-extras.js" crossorigin="anonymous"></script>
   <script src="/spatial-landing.js" crossorigin="anonymous"></script>
@@ -46,19 +50,7 @@
   <div id="hotspotMarkersContainer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 26;"></div>
 
   <!-- SVG Overlay for connecting line -->
-  <svg id="connectorSvg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 28; display: none;">
-    <defs>
-      <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
-        <feGaussianBlur stdDeviation="3" result="blur" />
-        <feMerge>
-          <feMergeNode in="blur" />
-          <feMergeNode in="SourceGraphic" />
-        </feMerge>
-      </filter>
-    </defs>
-    <line id="connectorLine" x1="0" y1="0" x2="0" y2="0" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" filter="url(#neonGlow)" />
-    <circle id="connectorJoint" cx="0" cy="0" r="4.5" fill="#000000" stroke="#ffffff" stroke-width="1.5" filter="url(#neonGlow)" />
-  </svg>
+
 
   <!-- Screen-projected details card -->
   <div id="detailsCard" class="details-card-projected" style="display: none;">
@@ -70,6 +62,15 @@
     </button>
     <h4 id="detailsTitle" class="details-title">Part Title</h4>
     <p id="detailsDesc" class="details-desc">Part description...</p>
+    
+    <!-- Spin Toggle (Only shown for blades) -->
+    <div id="spinToggleContainer" class="spin-toggle-container" style="display: none;">
+      <span class="spin-label">TEST ROTATION</span>
+      <label class="premium-switch">
+        <input type="checkbox" id="spinToggleCheckbox">
+        <span class="premium-slider"></span>
+      </label>
+    </div>
   </div>
 
   <!-- Sliders panel for manual offset adjustment -->

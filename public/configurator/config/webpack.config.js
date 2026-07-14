@@ -112,6 +112,12 @@ const config = {
           to: path.join(distPath, 'image-targets'),
           noErrorOnMissing: true,
         },
+        {
+          from: path.join(rootPath, '../../8thwall-tools/packages/xrextras/src/loadingmodule'),
+          to: distPath,
+          filter: (resourcePath) => resourcePath.endsWith('.png') || resourcePath.endsWith('.svg'),
+          noErrorOnMissing: true,
+        },
       ],
     }),
   ],
