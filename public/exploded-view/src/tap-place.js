@@ -168,17 +168,23 @@ export const tapPlaceComponent = {
       const dist = Math.hypot(dx, dy)
       const angle = Math.atan2(dy, dx)
 
-      // --- Pinch to Scale ---
+      // --- Pinch to Scale (Smooth & Controlled) ---
       if (this._lastPinchDist !== null) {
-        const scaleDelta = dist / this._lastPinchDist
-        const newTarget = Math.min(5.0, Math.max(0.1, this._targetScale * scaleDelta))
+        const diff = dist - this._lastPinchDist
+        // Use a small damping factor for slow, premium scaling
+        const newTarget = Math.min(5.0, Math.max(0.2, this._targetScale + diff * 0.004))
         this._targetScale = newTarget
       }
 
-      // --- Twist to Rotate ---
+      // --- Twist to Rotate (Damped for smoothness) ---
       if (this._lastTwistAngle !== null) {
-        const angleDelta = (angle - this._lastTwistAngle) * (180 / Math.PI)
-        this._targetRotY += angleDelta
+        // Normalize angle difference to prevent wrap-around jumps
+        let angleDelta = angle - this._lastTwistAngle
+        if (angleDelta > Math.PI) angleDelta -= 2 * Math.PI
+        if (angleDelta < -Math.PI) angleDelta += 2 * Math.PI
+        
+        // Convert to degrees and apply damping
+        this._targetRotY += angleDelta * (180 / Math.PI) * 0.5
       }
 
       this._lastPinchDist = dist
@@ -422,6 +428,29 @@ export const tapPlaceComponent = {
 
           const obj = newElement.getObject3D('mesh')
           if (obj) {
+            // Temporarily reset position, rotation, and scale to get local coordinates equal to world coordinates for centering
+            const originalPos = newElement.object3D.position.clone()
+            const originalRot = newElement.object3D.rotation.clone()
+            const originalScale = newElement.object3D.scale.clone()
+            
+            newElement.object3D.position.set(0, 0, 0)
+            newElement.object3D.rotation.set(0, 0, 0)
+            newElement.object3D.scale.set(1.0, 1.0, 1.0)
+            newElement.object3D.updateMatrixWorld(true)
+            obj.updateMatrixWorld(true)
+
+            const box = new THREE.Box3().setFromObject(obj)
+            const center = new THREE.Vector3()
+            box.getCenter(center)
+            
+            // Translate visual mesh root locally so its visual center is exactly at parent's (0,0,0) origin
+            obj.position.sub(center)
+
+            // Restore the original position, rotation, and scale (which has 0.0001 scale for entrance animation)
+            newElement.object3D.position.copy(originalPos)
+            newElement.object3D.rotation.copy(originalRot)
+            newElement.object3D.scale.copy(originalScale)
+            newElement.object3D.updateMatrixWorld(true)
 
             obj.traverse((node) => {
               if (node.name && node.type !== 'Bone' && node.type !== 'Scene') {
