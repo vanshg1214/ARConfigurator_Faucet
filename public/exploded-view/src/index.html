@@ -55,13 +55,16 @@
   <!-- Screen-projected details card -->
   <div id="detailsCard" class="details-card-projected" style="display: none;">
     <button id="closeDetailsBtn" class="close-details-btn">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="18" y1="6" x2="6" y2="18"></line>
         <line x1="6" y1="6" x2="18" y2="18"></line>
       </svg>
     </button>
     <h4 id="detailsTitle" class="details-title">Part Title</h4>
     <p id="detailsDesc" class="details-desc">Part description...</p>
+    
+    <!-- Specifications Sheet (Generated dynamically) -->
+    <div id="detailsSpecs" class="details-specs" style="display: none;"></div>
     
     <!-- Spin Toggle (Only shown for blades) -->
     <div id="spinToggleContainer" class="spin-toggle-container" style="display: none;">
@@ -124,7 +127,7 @@
   </div>
 
   <!-- Add the tap-place component to the scene so it has an effect -->
-  <a-scene xrextras-gesture-detector tap-place landing-page xrextras-loading xrextras-runtime-error renderer="colorManagement:true" xrweb="
+  <a-scene xrextras-gesture-detector tap-place landing-page xrextras-loading xrextras-runtime-error renderer="colorManagement: true; precision: mediump; powerPreference: high-performance;" xrweb="
     allowedDevices: any;
     defaultEnvironmentFogIntensity: 0.5; 
     defaultEnvironmentFloorTexture: #groundTex; 
@@ -149,14 +152,8 @@
     <a-entity light="
       type: directional;
       intensity: 0.8;
-      castShadow: true;
-      shadowMapHeight: 1024;
-      shadowMapWidth: 1024;
-      shadowCameraTop: 15;
-      shadowCameraBottom: -15;
-      shadowCameraRight: 15;
-      shadowCameraLeft: -15;
-      target: #camera" xrextras-attach="target: camera; offset: 8 15 4" position="1 4.3 2.5" shadow>
+      castShadow: false;
+      target: #camera" xrextras-attach="target: camera; offset: 8 15 4" position="1 4.3 2.5">
     </a-entity>
 
     <a-light type="ambient" intensity="0.28"></a-light>
@@ -164,7 +161,7 @@
 
     <!-- Adding the cantap class allows the ground to be clicked -->
     <a-box id="ground" class="cantap" scale="1000 2 1000" position="0 -0.99 0"
-      material="shader: shadow; transparent: true; opacity: 0.4" shadow>
+      material="transparent: true; opacity: 0.0">
     </a-box>
   </a-scene>
 

@@ -51,11 +51,20 @@ export const tapPlaceComponent = {
     this.partInfo = {
       tube_front: {
         title: "Front Fan Shroud",
-        desc: "Aerodynamic intake casing designed to direct airflow smoothly into the compressor blades while minimizing drag."
+        desc: "Aerodynamic intake casing designed to direct airflow smoothly into the compressor blades while minimizing drag.",
+        specs: [
+          { name: "Diameter", value: "2.1 Meters" },
+          { name: "Bypass Ratio", value: "9:1" }
+        ]
       },
       blades: {
         title: "Titanium Fan Blades",
-        desc: "High-bypass fan blades that compress and propel massive volumes of air to generate primary propulsion thrust."
+        desc: "High-bypass titanium fan blades that compress and propel massive volumes of air to generate primary propulsion thrust.",
+        specs: [
+          { name: "Max Speed", value: "12,500 RPM" },
+          { name: "Material", value: "Ti-6Al-4V Alloy" },
+          { name: "Blade Count", value: "24 Blades" }
+        ]
       },
       turbine_hull: {
         title: "Outer Engine Casing",
@@ -244,7 +253,7 @@ export const tapPlaceComponent = {
 
         newElement.setAttribute('visible', 'false')
         newElement.setAttribute('scale', '0.0001 0.0001 0.0001')
-        newElement.setAttribute('shadow', { receive: false })
+        newElement.setAttribute('shadow', { cast: false, receive: false })
         newElement.setAttribute('gltf-model', '#engineModel')
 
         // Create Dynamic Sweeping Light Rig
@@ -497,6 +506,8 @@ export const tapPlaceComponent = {
     if (btnExplode) {
       btnExplode.addEventListener('click', (e) => {
         e.stopPropagation()
+        this.isInitialAssemble = false
+        this.transitionDuration = 4500.0
         this.isExploded = !this.isExploded
         btnExplode.classList.toggle('active', this.isExploded)
         if (explodeBtnText) {
@@ -663,7 +674,10 @@ export const tapPlaceComponent = {
 
         // 3. Update hotspots (opacity, visibility, and screen projection)
         // Wait until parts are in their final place (explodeProgress > 0.95) before showing
-        const hotspotOpacity = this.explodeProgress > 0.95 ? Math.max(0.0, Math.min(1.0, (this.explodeProgress - 0.95) * 20)) : 0.0
+        // Also ensure they are hidden during the initial entrance animation and fade out immediately on assembly
+        const hotspotOpacity = (this.isExploded && !this.isInitialAssemble && this.explodeProgress > 0.95) 
+          ? Math.max(0.0, Math.min(1.0, (this.explodeProgress - 0.95) * 20)) 
+          : 0.0
         const camera = this.el.sceneEl.camera
         const card = document.getElementById('detailsCard')
         const isCardVisible = card && card.style.display === 'block' && card.classList.contains('show')
@@ -834,6 +848,26 @@ export const tapPlaceComponent = {
     if (card && title && desc) {
       title.innerText = details.title
       desc.innerText = details.desc
+
+      // Populate specs sheet dynamically
+      const specsContainer = document.getElementById('detailsSpecs')
+      if (specsContainer) {
+        specsContainer.innerHTML = ''
+        if (details.specs && details.specs.length > 0) {
+          details.specs.forEach(spec => {
+            const specEl = document.createElement('div')
+            specEl.className = 'spec-item'
+            specEl.innerHTML = `
+              <span class="spec-name">${spec.name}</span>
+              <span class="spec-val">${spec.value}</span>
+            `
+            specsContainer.appendChild(specEl)
+          })
+          specsContainer.style.display = 'flex'
+        } else {
+          specsContainer.style.display = 'none'
+        }
+      }
 
       const spinToggleContainer = document.getElementById('spinToggleContainer')
       if (spinToggleContainer) {
