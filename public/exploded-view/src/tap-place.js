@@ -107,6 +107,7 @@ export const tapPlaceComponent = {
     this._lastPinchDist = null
     this._lastTwistAngle = null
     this._gestureActive = false
+    this._lastGestureTime = 0
 
     // --- Hide watermark using MutationObserver ---
     const hidePoweredBy = () => {
@@ -187,6 +188,7 @@ export const tapPlaceComponent = {
         this._targetRotY += angleDelta * (180 / Math.PI) * 0.5
       }
 
+      this._lastGestureTime = Date.now()
       this._lastPinchDist = dist
       this._lastTwistAngle = angle
     }
@@ -219,6 +221,11 @@ export const tapPlaceComponent = {
       }
 
       g.addEventListener('click', (event) => {
+        // Ignore placement clicks if the user was just doing a pinch/twist gesture
+        if (Date.now() - this._lastGestureTime < 350) {
+          return
+        }
+
         const card = document.getElementById('detailsCard')
         if (card && card.style.display === 'block' && card.classList.contains('show')) return
 
