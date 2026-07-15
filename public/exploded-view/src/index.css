@@ -82,8 +82,8 @@
 /* Premium Action Button Styles */
 .action-container {
   position: absolute;
-  bottom: max(5%, 30px);
-  padding-bottom: env(safe-area-inset-bottom, 15px);
+  bottom: max(8%, 50px);
+  padding-bottom: env(safe-area-inset-bottom, 20px);
   left: 0;
   width: 100%;
   display: flex;
@@ -263,8 +263,8 @@ a[href*="8thwall.com"], a[href*="8thwall.io"] {
   }
   
   .action-container {
-    bottom: max(4%, 25px) !important;
-    padding-bottom: env(safe-area-inset-bottom, 10px) !important;
+    bottom: max(10%, 45px) !important;
+    padding-bottom: env(safe-area-inset-bottom, 20px) !important;
   }
 }
 
