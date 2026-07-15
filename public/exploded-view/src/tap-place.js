@@ -88,9 +88,9 @@ export const tapPlaceComponent = {
     }
 
     // --- Smooth Gesture State ---
-    this._targetScale = 1.0
+    this._targetScale = 2.0
+    this._currentScale = 2.0
     this._targetRotY = 0
-    this._currentScale = 1.0
     this._currentRotY = 0
 
     // Touch tracking for custom gesture handling
@@ -198,8 +198,8 @@ export const tapPlaceComponent = {
       const spinCheckbox = document.getElementById('spinToggleCheckbox')
       if (spinCheckbox) {
         spinCheckbox.addEventListener('change', (e) => {
-          // Target velocity: ~1.5 rotations per second (approx 9.4 radians/sec) when ON
-          this.targetBladeSpinVelocity = e.target.checked ? 10.0 : 0.0
+          // Target a high speed (25 rad/s) for a powerful turbine blur effect
+          this.targetBladeSpinVelocity = e.target.checked ? 25.0 : 0.0
         })
       }
 
@@ -224,7 +224,7 @@ export const tapPlaceComponent = {
           // Smoothly glide to new position, preserve user's custom rotation/scale
           this.engineElement.setAttribute('animation__pos', {
             property: 'position',
-            to: `${touchPoint.x} ${touchPoint.y + 2.0} ${touchPoint.z}`,
+            to: `${touchPoint.x} ${touchPoint.y + 5.0} ${touchPoint.z}`,
             easing: 'easeOutQuad',
             dur: 500,
           })
@@ -235,7 +235,7 @@ export const tapPlaceComponent = {
         const newElement = document.createElement('a-entity')
         this.engineElement = newElement
 
-        newElement.setAttribute('position', `${touchPoint.x} ${touchPoint.y + 2.0} ${touchPoint.z}`)
+        newElement.setAttribute('position', `${touchPoint.x} ${touchPoint.y + 5.0} ${touchPoint.z}`)
         newElement.setAttribute('rotation', `0 ${rotationY} 0`)
 
         newElement.addEventListener('animationcomplete', (e) => {
@@ -246,6 +246,25 @@ export const tapPlaceComponent = {
         newElement.setAttribute('scale', '0.0001 0.0001 0.0001')
         newElement.setAttribute('shadow', { receive: false })
         newElement.setAttribute('gltf-model', '#engineModel')
+
+        // Create Dynamic Sweeping Light Rig
+        const lightOrbit = document.createElement('a-entity')
+        lightOrbit.setAttribute('position', newElement.getAttribute('position'))
+        this.el.sceneEl.appendChild(lightOrbit)
+        this.lightOrbit = lightOrbit
+
+        // Primary bright sweeping highlight
+        const sweepLight1 = document.createElement('a-entity')
+        sweepLight1.setAttribute('light', 'type: point; intensity: 1.2; distance: 10; decay: 2; color: #ffffff')
+        sweepLight1.setAttribute('position', '2 3 3')
+        lightOrbit.appendChild(sweepLight1)
+
+        // Secondary cool sheen from the opposite side
+        const sweepLight2 = document.createElement('a-entity')
+        sweepLight2.setAttribute('light', 'type: point; intensity: 0.8; distance: 8; decay: 2; color: #a3cfff')
+        sweepLight2.setAttribute('position', '-2 1.5 -3')
+        lightOrbit.appendChild(sweepLight2)
+
         this.el.sceneEl.appendChild(newElement)
 
         newElement.addEventListener('model-loaded', () => {
@@ -455,16 +474,18 @@ export const tapPlaceComponent = {
           // Init gesture targets from actual placed values
           this._targetRotY = rotationY
           this._currentRotY = rotationY
-          this._targetScale = 1.0
+          // Set initial scale to 0.0001 for smooth spawn animation, targeting the new 2.0 scale
+          this._targetScale = 2.0
           this._currentScale = 0.0001
-
-          newElement.setAttribute('visible', 'true')
+          this.engineElement.setAttribute('scale', '0.0001 0.0001 0.0001')
           newElement.setAttribute('animation', {
             property: 'scale',
-            to: '1.0 1.0 1.0',
+            to: '2.0 2.0 2.0',
             easing: 'easeOutElastic',
             dur: 800,
           })
+
+          newElement.setAttribute('visible', 'true')
         })
       })
     }
@@ -506,29 +527,42 @@ export const tapPlaceComponent = {
     if (this.engineElement) {
       const lerpFactor = 1 - Math.pow(0.05, timeDelta / 1000)
       const prevScale = this._currentScale
-      const prevRotY = this._currentRotY
-
+      
       this._currentScale += (this._targetScale - this._currentScale) * lerpFactor
-      this._currentRotY += (this._targetRotY - this._currentRotY) * lerpFactor
 
-      if (Math.abs(this._currentScale - prevScale) > 0.0001 ||
-        Math.abs(this._currentRotY - prevRotY) > 0.01) {
+      if (Math.abs(this._currentScale - prevScale) > 0.0001) {
         const s = this._currentScale
         this.engineElement.object3D.scale.set(s, s, s)
+      }
+      
+      if (Math.abs(this._currentRotY - this._targetRotY) > 0.01) {
+        this._currentRotY += (this._targetRotY - this._currentRotY) * lerpFactor
         this.engineElement.object3D.rotation.y = this._currentRotY * (Math.PI / 180)
       }
     }
 
-    // 2. Continuous Spin Update for Blades
-    const spinAccel = 0.02 * timeDelta // Slow ramp-up acceleration
+    // Dynamic Sweeping Light Orbit
+    if (this.lightOrbit && this.engineElement) {
+      // Sync orbit center to engine position (in case it is dragged)
+      this.lightOrbit.object3D.position.copy(this.engineElement.object3D.position)
+      // Slow constant orbital rotation for premium specular sweeps
+      this.lightOrbit.object3D.rotation.y -= 0.6 * (timeDelta / 1000)
+    }
+
+    // 2. Continuous Spin Update for Blades (Realistic Spool Up/Down)
+    // Dynamic acceleration: starts slow, builds up as it gets faster
+    const currentSpeed = Math.abs(this.bladeSpinVelocity)
+    const spinAccel = (1.5 + currentSpeed * 0.2) * (timeDelta / 1000) 
+    
     if (this.bladeSpinVelocity < this.targetBladeSpinVelocity) {
       this.bladeSpinVelocity = Math.min(this.targetBladeSpinVelocity, this.bladeSpinVelocity + spinAccel)
     } else if (this.bladeSpinVelocity > this.targetBladeSpinVelocity) {
       this.bladeSpinVelocity = Math.max(this.targetBladeSpinVelocity, this.bladeSpinVelocity - spinAccel)
     }
 
-    // Add to continuous rotation angle
-    this.bladeRotationAngle += this.bladeSpinVelocity * (timeDelta / 1000)
+    // Add to continuous rotation angle (clamp delta to prevent aliasing/jerking on frame drops)
+    const clampedDelta = Math.min(timeDelta, 32)
+    this.bladeRotationAngle += this.bladeSpinVelocity * (clampedDelta / 1000)
 
     // 3. Exploded view calculations
     if (this.explosionNodes && this.explosionNodes.length > 0 && this.engineElement) {
@@ -594,8 +628,12 @@ export const tapPlaceComponent = {
             const key = node.userData.key
             const offset = this.currentOffsets[key]
 
+            // Transform local original position to world coordinates
             const originalWorldPos = node.userData.originalLocalPos.clone().applyMatrix4(node.parent.matrixWorld)
-            const targetWorldPos = originalWorldPos.clone().addScaledVector(worldDir, offset)
+            
+            // Multiply offset by current scale so explosion distance scales proportionally with the model
+            const scaledOffset = offset * this._currentScale
+            const targetWorldPos = originalWorldPos.clone().addScaledVector(worldDir, scaledOffset)
 
             const targetLocalPos = targetWorldPos.clone()
             node.parent.worldToLocal(targetLocalPos)
