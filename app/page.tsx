@@ -32,6 +32,15 @@ export default function Home() {
       color: "#10b981",
       glowColor: "rgba(16, 185, 129, 0.15)",
       features: ["SLAM Ground Reticle", "Bouncy Scale Easing", "Decimated Faucet mesh", "Water Flow Playback"]
+    },
+    {
+      title: "Image Tracking Watch",
+      path: "/image-tracking",
+      badge: "Print Media AR",
+      description: "WebAR experience demonstrating physical print-media tracking. A 3D smartwatch model dynamically anchors to a targeted physical image card in real-time.",
+      color: "#eab308",
+      glowColor: "rgba(234, 179, 8, 0.15)",
+      features: ["Image Target Recognition", "Real-time Tracking", "Apple Watch Ultra GLB", "Dynamic Positioning"]
     }
   ];
 

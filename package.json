@@ -5,10 +5,13 @@
   "workspaces": [
     "public/aframe-cactus",
     "public/configurator",
-    "public/exploded-view"
+    "public/exploded-view",
+    "public/image-tracking",
+    "public/sofa-configurator"
   ],
   "scripts": {
     "dev": "next dev",
+    "dev:https": "next dev --experimental-https --hostname 0.0.0.0",
     "build": "npm run build --workspaces --if-present && next build",
     "start": "next start",
     "lint": "eslint"
@@ -17,6 +20,7 @@
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "next": "16.2.9",
+    "ngrok": "^5.0.0-beta.2",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "three": "^0.184.0"

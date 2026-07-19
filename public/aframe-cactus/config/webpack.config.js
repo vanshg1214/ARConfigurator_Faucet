@@ -75,7 +75,6 @@ const makeDefaultHtmlLoader = () => ({
 const config = {
   entry: {
     app: path.join(srcPath, 'app.js'),
-    imageTargetApp: path.join(srcPath, 'image-target-app.js'),
   },
   output: {
     filename: '[name].bundle.js',
@@ -87,12 +86,6 @@ const config = {
       template: path.join(srcPath, 'index.html'),
       filename: 'index.html',
       chunks: ['app'],
-      inject: false,
-    }),
-    new HtmlWebpackPlugin({
-      template: path.join(srcPath, 'image-target.html'),
-      filename: 'image-target/index.html',
-      chunks: ['imageTargetApp'],
       inject: false,
     }),
     new CopyWebpackPlugin({

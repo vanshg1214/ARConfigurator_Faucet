@@ -1,0 +1,23 @@
+{
+  "imagePath": "image-targets/watch-img_luminance.png",
+  "metadata": null,
+  "name": "watch-img",
+  "type": "PLANAR",
+  "properties": {
+    "left": 0,
+    "top": 262,
+    "width": 1143,
+    "height": 1524,
+    "isRotated": true,
+    "originalWidth": 1143,
+    "originalHeight": 2048
+  },
+  "resources": {
+    "originalImage": "watch-img_original.png",
+    "croppedImage": "watch-img_cropped.png",
+    "thumbnailImage": "watch-img_thumbnail.png",
+    "luminanceImage": "watch-img_luminance.png"
+  },
+  "created": 1784486402604,
+  "updated": 1784486402604
+}
