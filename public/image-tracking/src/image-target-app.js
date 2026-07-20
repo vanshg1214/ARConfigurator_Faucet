@@ -72,10 +72,31 @@ AFRAME.registerComponent('transform-logger', {
         btnMinus.style.color = 'white'
         btnMinus.style.fontWeight = 'bold'
         
-        const valDisp = document.createElement('div')
-        valDisp.style.width = '34px'
+        const valDisp = document.createElement('input')
+        valDisp.type = 'number'
+        valDisp.style.width = '45px'
         valDisp.style.textAlign = 'center'
         valDisp.style.fontFamily = 'monospace'
+        valDisp.style.backgroundColor = 'transparent'
+        valDisp.style.color = 'white'
+        valDisp.style.border = 'none'
+        valDisp.style.outline = 'none'
+        valDisp.style.fontSize = '11px'
+        
+        // Prevent keypresses (like WASD) from moving the camera while typing
+        valDisp.addEventListener('keydown', (e) => e.stopPropagation())
+        
+        // Update the 3D model when the user types a new value and presses enter or clicks away
+        valDisp.addEventListener('change', (e) => {
+          const val = parseFloat(e.target.value)
+          if (!isNaN(val)) {
+            if (type === 'rotation') {
+              this.el.object3D[propName][axis] = val * (Math.PI / 180)
+            } else {
+              this.el.object3D[propName][axis] = val
+            }
+          }
+        })
         
         const btnPlus = document.createElement('button')
         btnPlus.innerText = '+'
@@ -120,9 +141,9 @@ AFRAME.registerComponent('transform-logger', {
       this.panel.appendChild(row)
     }
     
-    createRow('POS', 'position', 0.25, 'position') // 25cm steps
-    createRow('ROT', 'rotation', 5, 'rotation')    // 5 degree steps
-    createRow('SCL', 'scale', 0.5, 'scale')        // 0.5 scale steps
+    createRow('POS', 'position', 0.001, 'position') // 1mm steps
+    createRow('ROT', 'rotation', 1, 'rotation')    // 1 degree steps
+    createRow('SCL', 'scale', 0.1, 'scale')        // 0.1 scale steps
   },
   
   tick() {
@@ -131,17 +152,20 @@ AFRAME.registerComponent('transform-logger', {
     const r = this.el.object3D.rotation
     const s = this.el.object3D.scale
     
-    this.displays.position.x.innerText = p.x.toFixed(1)
-    this.displays.position.y.innerText = p.y.toFixed(1)
-    this.displays.position.z.innerText = p.z.toFixed(1)
+    // Only update the input if the user is not actively typing in it
+    const active = document.activeElement
     
-    this.displays.rotation.x.innerText = (r.x * 180 / Math.PI).toFixed(0)
-    this.displays.rotation.y.innerText = (r.y * 180 / Math.PI).toFixed(0)
-    this.displays.rotation.z.innerText = (r.z * 180 / Math.PI).toFixed(0)
+    if (active !== this.displays.position.x) this.displays.position.x.value = p.x.toFixed(3)
+    if (active !== this.displays.position.y) this.displays.position.y.value = p.y.toFixed(3)
+    if (active !== this.displays.position.z) this.displays.position.z.value = p.z.toFixed(3)
     
-    this.displays.scale.x.innerText = s.x.toFixed(1)
-    this.displays.scale.y.innerText = s.y.toFixed(1)
-    this.displays.scale.z.innerText = s.z.toFixed(1)
+    if (active !== this.displays.rotation.x) this.displays.rotation.x.value = (r.x * 180 / Math.PI).toFixed(0)
+    if (active !== this.displays.rotation.y) this.displays.rotation.y.value = (r.y * 180 / Math.PI).toFixed(0)
+    if (active !== this.displays.rotation.z) this.displays.rotation.z.value = (r.z * 180 / Math.PI).toFixed(0)
+    
+    if (active !== this.displays.scale.x) this.displays.scale.x.value = s.x.toFixed(2)
+    if (active !== this.displays.scale.y) this.displays.scale.y.value = s.y.toFixed(2)
+    if (active !== this.displays.scale.z) this.displays.scale.z.value = s.z.toFixed(2)
   }
 })
 
