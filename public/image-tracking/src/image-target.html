@@ -17,10 +17,13 @@
   <script src="./app.bundle.js"></script>
 
   <!-- We use standard xrweb but omit the imageTargets param because we injected it via XR8.XrController.configure in our JS -->
-  <a-scene xrextras-gesture-detector xrextras-loading xrextras-runtime-error renderer="colorManagement:true" xrweb="allowedDevices: any;">
+  <a-scene xrextras-gesture-detector xrextras-runtime-error renderer="colorManagement:true" xrweb="allowedDevices: any;">
 
     <a-camera id="camera" position="0 8 8" raycaster="objects: .cantap" cursor="fuse: false; rayOrigin: mouse;">
     </a-camera>
+
+    <!-- Invisible ground plane for xrextras-hold-drag to raycast against -->
+    <a-plane id="ground" class="cantap" position="0 0 0" rotation="-90 0 0" width="100" height="100" material="transparent: true; opacity: 0"></a-plane>
 
     <a-assets>
       <a-asset-item id="watchModel" src="assets/apple_watch_ultra_2.glb"></a-asset-item>
