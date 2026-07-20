@@ -10,6 +10,42 @@ const onxrloaded = () => {
   console.log('DEBUG: Custom Image Target registered in XR8:', require('../image-targets/watch-img.json'))
 }
 
+// A real-time debug overlay to display scale, rotation, and position
+AFRAME.registerComponent('transform-logger', {
+  init() {
+    this.debugDiv = document.createElement('div')
+    this.debugDiv.style.position = 'fixed'
+    this.debugDiv.style.bottom = '20px'
+    this.debugDiv.style.left = '20px'
+    this.debugDiv.style.backgroundColor = 'rgba(0,0,0,0.8)'
+    this.debugDiv.style.color = '#00ff00'
+    this.debugDiv.style.padding = '15px'
+    this.debugDiv.style.borderRadius = '8px'
+    this.debugDiv.style.fontFamily = 'monospace'
+    this.debugDiv.style.fontSize = '14px'
+    this.debugDiv.style.zIndex = '9999'
+    this.debugDiv.style.pointerEvents = 'none'
+    document.body.appendChild(this.debugDiv)
+  },
+  tick() {
+    const p = this.el.object3D.position
+    const r = this.el.object3D.rotation
+    const s = this.el.object3D.scale
+    
+    // Convert radians to degrees for easy reading
+    const rx = (r.x * 180 / Math.PI).toFixed(1)
+    const ry = (r.y * 180 / Math.PI).toFixed(1)
+    const rz = (r.z * 180 / Math.PI).toFixed(1)
+
+    this.debugDiv.innerHTML = `
+      <b>Current Watch Settings:</b><br><br>
+      Scale: ${s.x.toFixed(2)} ${s.y.toFixed(2)} ${s.z.toFixed(2)}<br>
+      Rotation: ${rx} ${ry} ${rz}<br>
+      Position: ${p.x.toFixed(3)} ${p.y.toFixed(3)} ${p.z.toFixed(3)}
+    `
+  }
+})
+
 // Register debugging component for image target events
 AFRAME.registerComponent('log-image-target', {
   init() {
