@@ -109,6 +109,20 @@ export const tapPlaceComponent = {
     this._gestureActive = false
     this._lastGestureTime = 0
 
+    // --- FIX 1: Position Smoothing Buffer ---
+    // Stores the last N SLAM ground tap positions to average before placing.
+    // This eliminates single-frame SLAM noise spikes from affecting placement.
+    this._tapPositionBuffer = []   // circular buffer of {x,y,z} tap points
+    this._tapBufferSize = 8        // average over last 8 taps
+
+    // --- FIX 2: Velocity-based Stabilizer ---
+    // Tracks the engine's world position each frame and freezes it
+    // when the delta is below the jitter threshold (pure sensor noise).
+    this._lastEngineWorldPos = null  // THREE.Vector3 of last stable position
+    this._stablePosition = null      // locked world position when jitter detected
+    this._jitterThreshold = 0.002    // 2mm — below this, movement is noise, not intent
+    this._isGliding = false          // true during re-tap glide animation (skip stabilizer)
+
     // --- Hide watermark using MutationObserver ---
     const hidePoweredBy = () => {
       const selectors = [
@@ -230,7 +244,25 @@ export const tapPlaceComponent = {
         if (card && card.style.display === 'block' && card.classList.contains('show')) return
 
         if (this.prompt) this.prompt.style.display = 'none'
-        const touchPoint = event.detail.intersection.point
+        const rawTouchPoint = event.detail.intersection.point
+
+        // --- FIX 1: Position Smoothing Buffer ---
+        // Push the raw SLAM ground hit into the circular buffer
+        this._tapPositionBuffer.push({ x: rawTouchPoint.x, y: rawTouchPoint.y, z: rawTouchPoint.z })
+        if (this._tapPositionBuffer.length > this._tapBufferSize) {
+          this._tapPositionBuffer.shift() // drop oldest
+        }
+        // Average all buffered positions for a jitter-free placement point
+        const avg = this._tapPositionBuffer.reduce(
+          (acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y, z: acc.z + p.z }),
+          { x: 0, y: 0, z: 0 }
+        )
+        const n = this._tapPositionBuffer.length
+        const touchPoint = { x: avg.x / n, y: avg.y / n, z: avg.z / n }
+
+        // Reset the stabilizer's locked position so the new placement starts fresh
+        this._stablePosition = null
+        this._lastEngineWorldPos = null
 
         // Face camera on first placement
         const camera = document.getElementById('camera')
@@ -243,13 +275,20 @@ export const tapPlaceComponent = {
         }
 
         if (this.engineElement) {
-          // Smoothly glide to new position, preserve user's custom rotation/scale
+          // Smoothly glide to new averaged position, preserve user's custom rotation/scale
+          this._isGliding = true
+          this._stablePosition = null
+          this._lastEngineWorldPos = null
           this.engineElement.setAttribute('animation__pos', {
             property: 'position',
             to: `${touchPoint.x} ${touchPoint.y + 5.0} ${touchPoint.z}`,
             easing: 'easeOutQuad',
             dur: 500,
           })
+          // Clear glide flag once animation finishes so stabilizer re-locks
+          setTimeout(() => {
+            this._isGliding = false
+          }, 550)
           return
         }
 
@@ -586,7 +625,35 @@ export const tapPlaceComponent = {
         this._currentRotY += (this._targetRotY - this._currentRotY) * lerpFactor
         this.engineElement.object3D.rotation.y = this._currentRotY * (Math.PI / 180)
       }
-    }
+
+      // --- FIX 2: Velocity-based Stabilizer ---
+      // Skip during intentional glide animations and scale/gesture transitions.
+      const isGestureActive = this._gestureActive || (Date.now() - this._lastGestureTime < 500)
+      if (!this._isGliding && !isGestureActive) {
+        const THREE = AFRAME.THREE
+        const currentWorldPos = new THREE.Vector3()
+        this.engineElement.object3D.getWorldPosition(currentWorldPos)
+
+        if (this._lastEngineWorldPos) {
+          const delta = currentWorldPos.distanceTo(this._lastEngineWorldPos)
+
+          if (delta < this._jitterThreshold) {
+            // Movement is below 2mm — this is sensor noise. Freeze the engine.
+            if (this._stablePosition) {
+              this.engineElement.object3D.position.copy(this._stablePosition)
+            }
+          } else {
+            // Movement is intentional. Update the stable anchor.
+            this._stablePosition = currentWorldPos.clone()
+          }
+        } else {
+          // First frame after placement — seed the stable position
+          this._stablePosition = currentWorldPos.clone()
+        }
+
+        this._lastEngineWorldPos = currentWorldPos.clone()
+      }
+    } // end if (this.engineElement)
 
     // Dynamic Sweeping Light Orbit
     if (this.lightOrbit && this.engineElement) {

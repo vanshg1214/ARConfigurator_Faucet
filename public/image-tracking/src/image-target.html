@@ -29,7 +29,15 @@
     <!-- Use our custom component for Extended Tracking (SLAM) -->
     <a-entity persisting-image-target="name: watch-img">
       <!-- Spawn the watch model right on top of the image target -->
-      <a-entity gltf-model="#watchModel" scale="1 1 1" position="0 0 0" rotation="0 0 0"></a-entity>
+      <a-entity 
+        gltf-model="#watchModel" 
+        scale="5 5 5" 
+        position="0 0 0" 
+        rotation="-90 0 0"
+        xrextras-hold-drag 
+        xrextras-two-finger-rotate 
+        xrextras-pinch-scale>
+      </a-entity>
     </a-entity>
 
   </a-scene>
