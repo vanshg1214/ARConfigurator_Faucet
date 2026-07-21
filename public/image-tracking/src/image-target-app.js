@@ -19,16 +19,17 @@ AFRAME.registerComponent('transform-logger', {
     this.panel.style.transform = 'translateX(-50%)'
     this.panel.style.backgroundColor = 'rgba(0,0,0,0.85)'
     this.panel.style.color = '#fff'
-    this.panel.style.padding = '10px'
+    this.panel.style.padding = '5px'
     this.panel.style.borderRadius = '8px'
     this.panel.style.fontFamily = 'sans-serif'
-    this.panel.style.fontSize = '11px'
+    this.panel.style.fontSize = '10px'
     this.panel.style.zIndex = '9999'
     this.panel.style.display = 'flex'
     this.panel.style.flexDirection = 'column'
-    this.panel.style.gap = '6px'
-    this.panel.style.width = '95%'
+    this.panel.style.gap = '4px'
+    this.panel.style.width = '98%'
     this.panel.style.maxWidth = '400px'
+    this.panel.style.overflowX = 'auto' // Fallback for very small screens
     
     // Prevent touch events from bleeding through to A-Frame gestures (stops the camera/drag from moving when tapping buttons)
     this.panel.addEventListener('touchstart', (e) => e.stopPropagation())
@@ -42,8 +43,8 @@ AFRAME.registerComponent('transform-logger', {
     title.style.fontWeight = 'bold'
     title.style.textAlign = 'center'
     title.style.color = '#00ff00'
-    title.style.fontSize = '13px'
-    title.style.marginBottom = '4px'
+    title.style.fontSize = '11px'
+    title.style.marginBottom = '2px'
     this.panel.appendChild(title)
     
     const createRow = (label, propName, step, type) => {
@@ -55,32 +56,35 @@ AFRAME.registerComponent('transform-logger', {
       
       const lbl = document.createElement('div')
       lbl.innerText = label
-      lbl.style.width = '28px'
+      lbl.style.width = '24px'
       lbl.style.fontWeight = 'bold'
+      lbl.style.fontSize = '9px'
       row.appendChild(lbl)
       
       const axes = ['x', 'y', 'z']
       axes.forEach(axis => {
         const btnMinus = document.createElement('button')
         btnMinus.innerText = '-'
-        btnMinus.style.width = '26px'
-        btnMinus.style.height = '26px'
+        btnMinus.style.width = '20px'
+        btnMinus.style.height = '24px'
         btnMinus.style.borderRadius = '4px'
         btnMinus.style.border = 'none'
         btnMinus.style.backgroundColor = '#444'
         btnMinus.style.color = 'white'
         btnMinus.style.fontWeight = 'bold'
+        btnMinus.style.padding = '0'
         
         const valDisp = document.createElement('input')
         valDisp.type = 'number'
-        valDisp.style.width = '45px'
+        valDisp.style.width = '38px'
         valDisp.style.textAlign = 'center'
         valDisp.style.fontFamily = 'monospace'
         valDisp.style.backgroundColor = 'transparent'
         valDisp.style.color = 'white'
         valDisp.style.border = 'none'
         valDisp.style.outline = 'none'
-        valDisp.style.fontSize = '11px'
+        valDisp.style.fontSize = '10px'
+        valDisp.style.padding = '0'
         
         // Prevent keypresses (like WASD) from moving the camera while typing
         valDisp.addEventListener('keydown', (e) => e.stopPropagation())
@@ -99,13 +103,14 @@ AFRAME.registerComponent('transform-logger', {
         
         const btnPlus = document.createElement('button')
         btnPlus.innerText = '+'
-        btnPlus.style.width = '26px'
-        btnPlus.style.height = '26px'
+        btnPlus.style.width = '20px'
+        btnPlus.style.height = '24px'
         btnPlus.style.borderRadius = '4px'
         btnPlus.style.border = 'none'
         btnPlus.style.backgroundColor = '#444'
         btnPlus.style.color = 'white'
         btnPlus.style.fontWeight = 'bold'
+        btnPlus.style.padding = '0'
         
         const updateVal = (dir) => {
           if (type === 'rotation') {
@@ -130,6 +135,7 @@ AFRAME.registerComponent('transform-logger', {
         group.style.padding = '2px'
         group.style.flex = '1'
         group.style.justifyContent = 'space-between'
+        group.style.minWidth = '0' // helps flex items shrink
         
         group.appendChild(btnMinus)
         group.appendChild(valDisp)
