@@ -14,24 +14,22 @@ AFRAME.registerComponent('transform-logger', {
   init() {
     this.panel = document.createElement('div')
     this.panel.style.position = 'fixed'
-    this.panel.style.bottom = '10px'
-    this.panel.style.left = '50%'
-    this.panel.style.transform = 'translateX(-50%)'
-    this.panel.style.backgroundColor = 'rgba(0,0,0,0.85)'
+    this.panel.style.bottom = '8px'
+    this.panel.style.left = '2vw'
+    this.panel.style.width = '96vw'
+    this.panel.style.boxSizing = 'border-box'
+    this.panel.style.backgroundColor = 'rgba(0,0,0,0.88)'
     this.panel.style.color = '#fff'
-    this.panel.style.padding = '5px'
+    this.panel.style.padding = '6px 4px'
     this.panel.style.borderRadius = '8px'
     this.panel.style.fontFamily = 'sans-serif'
     this.panel.style.fontSize = '10px'
-    this.panel.style.zIndex = '9999'
+    this.panel.style.zIndex = '99999'
     this.panel.style.display = 'flex'
     this.panel.style.flexDirection = 'column'
     this.panel.style.gap = '4px'
-    this.panel.style.width = '98%'
-    this.panel.style.maxWidth = '400px'
-    this.panel.style.overflowX = 'auto' // Fallback for very small screens
     
-    // Prevent touch events from bleeding through to A-Frame gestures (stops the camera/drag from moving when tapping buttons)
+    // Prevent touch events from bleeding through to A-Frame gestures
     this.panel.addEventListener('touchstart', (e) => e.stopPropagation())
     this.panel.addEventListener('touchmove', (e) => e.stopPropagation())
     this.panel.addEventListener('touchend', (e) => e.stopPropagation())
@@ -52,44 +50,64 @@ AFRAME.registerComponent('transform-logger', {
       row.style.display = 'flex'
       row.style.alignItems = 'center'
       row.style.justifyContent = 'space-between'
-      row.style.gap = '2px'
+      row.style.gap = '3px'
+      row.style.width = '100%'
+      row.style.boxSizing = 'border-box'
       
       const lbl = document.createElement('div')
       lbl.innerText = label
       lbl.style.width = '24px'
       lbl.style.fontWeight = 'bold'
       lbl.style.fontSize = '9px'
+      lbl.style.flexShrink = '0'
       row.appendChild(lbl)
       
       const axes = ['x', 'y', 'z']
       axes.forEach(axis => {
+        const group = document.createElement('div')
+        group.style.display = 'flex'
+        group.style.alignItems = 'center'
+        group.style.backgroundColor = '#222'
+        group.style.borderRadius = '4px'
+        group.style.padding = '1px'
+        group.style.flex = '1'
+        group.style.minWidth = '0'
+        group.style.boxSizing = 'border-box'
+        
         const btnMinus = document.createElement('button')
         btnMinus.innerText = '-'
-        btnMinus.style.width = '20px'
-        btnMinus.style.height = '24px'
-        btnMinus.style.borderRadius = '4px'
+        btnMinus.style.width = '18px'
+        btnMinus.style.height = '22px'
+        btnMinus.style.flexShrink = '0'
+        btnMinus.style.borderRadius = '3px'
         btnMinus.style.border = 'none'
         btnMinus.style.backgroundColor = '#444'
         btnMinus.style.color = 'white'
         btnMinus.style.fontWeight = 'bold'
         btnMinus.style.padding = '0'
+        btnMinus.style.fontSize = '12px'
+        btnMinus.style.cursor = 'pointer'
         
         const valDisp = document.createElement('input')
         valDisp.type = 'number'
-        valDisp.style.width = '38px'
+        valDisp.style.width = '100%'
+        valDisp.style.minWidth = '0'
         valDisp.style.textAlign = 'center'
         valDisp.style.fontFamily = 'monospace'
         valDisp.style.backgroundColor = 'transparent'
         valDisp.style.color = 'white'
         valDisp.style.border = 'none'
         valDisp.style.outline = 'none'
-        valDisp.style.fontSize = '10px'
+        valDisp.style.fontSize = '9px'
         valDisp.style.padding = '0'
+        valDisp.style.margin = '0'
+        valDisp.style.boxSizing = 'border-box'
+        valDisp.style.webkitAppearance = 'none'
         
-        // Prevent keypresses (like WASD) from moving the camera while typing
+        // Prevent keypresses from moving camera
         valDisp.addEventListener('keydown', (e) => e.stopPropagation())
         
-        // Update the 3D model when the user types a new value and presses enter or clicks away
+        // Update 3D model on change
         valDisp.addEventListener('change', (e) => {
           const val = parseFloat(e.target.value)
           if (!isNaN(val)) {
@@ -103,14 +121,17 @@ AFRAME.registerComponent('transform-logger', {
         
         const btnPlus = document.createElement('button')
         btnPlus.innerText = '+'
-        btnPlus.style.width = '20px'
-        btnPlus.style.height = '24px'
-        btnPlus.style.borderRadius = '4px'
+        btnPlus.style.width = '18px'
+        btnPlus.style.height = '22px'
+        btnPlus.style.flexShrink = '0'
+        btnPlus.style.borderRadius = '3px'
         btnPlus.style.border = 'none'
         btnPlus.style.backgroundColor = '#444'
         btnPlus.style.color = 'white'
         btnPlus.style.fontWeight = 'bold'
         btnPlus.style.padding = '0'
+        btnPlus.style.fontSize = '12px'
+        btnPlus.style.cursor = 'pointer'
         
         const updateVal = (dir) => {
           if (type === 'rotation') {
@@ -126,16 +147,6 @@ AFRAME.registerComponent('transform-logger', {
         if (!this.displays) this.displays = {}
         if (!this.displays[propName]) this.displays[propName] = {}
         this.displays[propName][axis] = valDisp
-        
-        const group = document.createElement('div')
-        group.style.display = 'flex'
-        group.style.alignItems = 'center'
-        group.style.backgroundColor = '#222'
-        group.style.borderRadius = '6px'
-        group.style.padding = '2px'
-        group.style.flex = '1'
-        group.style.justifyContent = 'space-between'
-        group.style.minWidth = '0' // helps flex items shrink
         
         group.appendChild(btnMinus)
         group.appendChild(valDisp)
@@ -157,7 +168,6 @@ AFRAME.registerComponent('transform-logger', {
     const r = this.el.object3D.rotation
     const s = this.el.object3D.scale
     
-    // Only update the input if the user is not actively typing in it
     const active = document.activeElement
     
     if (active !== this.displays.position.x) this.displays.position.x.value = p.x.toFixed(3)
