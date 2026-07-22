@@ -198,8 +198,8 @@ export const tapPlaceComponent = {
         if (angleDelta > Math.PI) angleDelta -= 2 * Math.PI
         if (angleDelta < -Math.PI) angleDelta += 2 * Math.PI
         
-        // Convert to degrees and apply damping
-        this._targetRotY += angleDelta * (180 / Math.PI) * 0.5
+        // Convert to degrees and apply damping (inverted sign to match intuitive gesture direction)
+        this._targetRotY -= angleDelta * (180 / Math.PI) * 0.5
       }
 
       this._lastGestureTime = Date.now()

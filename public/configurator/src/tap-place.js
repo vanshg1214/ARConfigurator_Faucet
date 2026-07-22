@@ -105,7 +105,7 @@ export const tapPlaceComponent = {
       // --- Twist to Rotate ---
       if (this._lastTwistAngle !== null) {
         const angleDelta = (angle - this._lastTwistAngle) * (180 / Math.PI)
-        this._targetRotY += angleDelta
+        this._targetRotY -= angleDelta
       }
 
       this._lastPinchDist = dist
