@@ -168,8 +168,8 @@ AFRAME.registerComponent('transform-logger', {
       // Card overlay: Position, Rotation, Width/Height
       const pos = el.getAttribute('position') || {x:0, y:0, z:0}
       const rot = el.getAttribute('rotation') || {x:0, y:0, z:0}
-      const w = parseFloat(el.getAttribute('width')) || 1
-      const h = parseFloat(el.getAttribute('height')) || 1.7918
+      const w = parseFloat(el.getAttribute('width')) || 1.7918
+      const h = parseFloat(el.getAttribute('height')) || 1
 
       this.setValue('pos', 'x', pos.x)
       this.setValue('pos', 'y', pos.y)

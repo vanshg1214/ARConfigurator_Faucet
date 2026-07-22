@@ -32,12 +32,12 @@
 
     <!-- Use our custom component for Extended Tracking (SLAM) -->
     <a-entity persisting-image-target="name: watch-img" transform-logger>
-      <!-- Card Image Overlay (1:1 aspect ratio) -->
+      <!-- Card Image Overlay (1:1 aspect ratio, un-squished) -->
       <a-image 
         id="cardOverlay"
         src="#cardImg" 
-        width="1" 
-        height="1.7918" 
+        width="1.7918" 
+        height="1" 
         position="0 0 0" 
         rotation="0 0 90">
       </a-image>
