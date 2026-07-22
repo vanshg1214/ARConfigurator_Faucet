@@ -32,13 +32,13 @@
 
     <!-- Use our custom component for Extended Tracking (SLAM) -->
     <a-entity persisting-image-target="name: watch-img">
-      <!-- Card Image Overlay (1:1 aspect ratio, rotated 90 deg) -->
+      <!-- Card Image Overlay (1:1 aspect ratio, flat on target surface Z=0) -->
       <a-image 
         src="#cardImg" 
-        width="1.7918" 
-        height="1" 
+        width="1" 
+        height="1.7918" 
         position="0 0 0" 
-        rotation="-90 0 90">
+        rotation="0 0 90">
       </a-image>
 
       <!-- Spawn the watch model right on top of the image target -->
