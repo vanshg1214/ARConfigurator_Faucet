@@ -105,17 +105,14 @@ AFRAME.registerComponent('transform-logger', {
         `).join('')}
       </div>
 
-      <!-- SCL / DIM ROW -->
+      <!-- UNIFORM SCALE ROW -->
       <div style="display: flex; align-items: center; gap: 4px; box-sizing: border-box;">
-        <span style="width: 32px; font-weight: bold; color: #ff3399;">${this.selectedTarget === 'card' ? 'SIZE' : 'SCL'}:</span>
-        ${['x','y','z'].map(axis => `
-          <div style="flex: 1; min-width: 0; display: flex; align-items: center; background: #1a1a1a; border-radius: 4px; padding: 2px;">
-            <span style="color: #aaa; padding: 0 2px;">${axis.toUpperCase()}:</span>
-            <button id="scl_${axis}_minus" style="background:#333; color:#fff; border:none; width:18px; height:20px; border-radius:2px;">-</button>
-            <input id="scl_${axis}_val" type="number" step="0.05" style="width: 100%; min-width: 0; background: transparent; border: none; color: #fff; text-align: center; font-size: 10px; -moz-appearance: textfield;" />
-            <button id="scl_${axis}_plus" style="background:#333; color:#fff; border:none; width:18px; height:20px; border-radius:2px;">+</button>
-          </div>
-        `).join('')}
+        <span style="width: 48px; font-weight: bold; color: #ff3399;">SCALE:</span>
+        <div style="flex: 1; min-width: 0; display: flex; align-items: center; background: #1a1a1a; border-radius: 4px; padding: 2px;">
+          <button id="scl_uniform_minus" style="background:#333; color:#fff; border:none; width:30px; height:22px; border-radius:2px; font-weight:bold;">-</button>
+          <input id="scl_uniform_val" type="number" step="0.05" style="width: 100%; min-width: 0; background: transparent; border: none; color: #fff; text-align: center; font-size: 11px; font-weight: bold; -moz-appearance: textfield;" />
+          <button id="scl_uniform_plus" style="background:#333; color:#fff; border:none; width:30px; height:22px; border-radius:2px; font-weight:bold;">+</button>
+        </div>
       </div>
     `
 
@@ -126,14 +123,14 @@ AFRAME.registerComponent('transform-logger', {
       this.syncInputsFromEntity()
     }
 
-    // Attach +/- and InputListeners
-    ;['pos', 'rot', 'scl'].forEach(type => {
+    // Attach POS and ROT listeners
+    ;['pos', 'rot'].forEach(type => {
       ;['x', 'y', 'z'].forEach(axis => {
         const input = this.panel.querySelector(`#${type}_${axis}_val`)
         const btnMinus = this.panel.querySelector(`#${type}_${axis}_minus`)
         const btnPlus = this.panel.querySelector(`#${type}_${axis}_plus`)
 
-        const step = type === 'pos' ? 0.01 : type === 'rot' ? 1 : 0.05
+        const step = type === 'pos' ? 0.01 : 1
 
         btnMinus.onclick = () => {
           let val = parseFloat(input.value) || 0
@@ -155,6 +152,32 @@ AFRAME.registerComponent('transform-logger', {
         }
       })
     })
+
+    // Attach Uniform SCALE listener
+    const sclInput = this.panel.querySelector('#scl_uniform_val')
+    const sclMinus = this.panel.querySelector('#scl_uniform_minus')
+    const sclPlus = this.panel.querySelector('#scl_uniform_plus')
+
+    const sclStep = 0.05
+
+    sclMinus.onclick = () => {
+      let val = parseFloat(sclInput.value) || 1
+      val = parseFloat((val - sclStep).toFixed(4))
+      sclInput.value = val
+      this.applyUniformScale(val)
+    }
+
+    sclPlus.onclick = () => {
+      let val = parseFloat(sclInput.value) || 1
+      val = parseFloat((val + sclStep).toFixed(4))
+      sclInput.value = val
+      this.applyUniformScale(val)
+    }
+
+    sclInput.onchange = () => {
+      let val = parseFloat(sclInput.value) || 1
+      this.applyUniformScale(val)
+    }
   },
 
   syncInputsFromEntity() {
@@ -165,10 +188,9 @@ AFRAME.registerComponent('transform-logger', {
     if (document.activeElement && document.activeElement.tagName === 'INPUT') return
 
     if (this.selectedTarget === 'card') {
-      // Card overlay: Position, Rotation, Width/Height
+      // Card overlay: Position, Rotation, Uniform Scale
       const pos = el.getAttribute('position') || {x:0, y:0, z:0}
       const rot = el.getAttribute('rotation') || {x:0, y:0, z:0}
-      const w = parseFloat(el.getAttribute('width')) || 1.7918
       const h = parseFloat(el.getAttribute('height')) || 1
 
       this.setValue('pos', 'x', pos.x)
@@ -179,14 +201,13 @@ AFRAME.registerComponent('transform-logger', {
       this.setValue('rot', 'y', rot.y)
       this.setValue('rot', 'z', rot.z)
 
-      this.setValue('scl', 'x', w)
-      this.setValue('scl', 'y', h)
-      this.setValue('scl', 'z', 0)
+      const sclInput = this.panel.querySelector('#scl_uniform_val')
+      if (sclInput) sclInput.value = Number(h).toFixed(2)
     } else {
       // Watch entity: Position, Rotation, Scale
       const pos = el.getAttribute('position') || {x:0, y:0, z:0}
       const rot = el.getAttribute('rotation') || {x:0, y:0, z:0}
-      const scl = el.getAttribute('scale') || {x:1, y:1, z:1}
+      const scl = el.getAttribute('scale') || {x:8.5, y:8.5, z:8.5}
 
       this.setValue('pos', 'x', pos.x)
       this.setValue('pos', 'y', pos.y)
@@ -196,9 +217,9 @@ AFRAME.registerComponent('transform-logger', {
       this.setValue('rot', 'y', rot.y)
       this.setValue('rot', 'z', rot.z)
 
-      this.setValue('scl', 'x', typeof scl === 'object' ? scl.x : scl)
-      this.setValue('scl', 'y', typeof scl === 'object' ? scl.y : scl)
-      this.setValue('scl', 'z', typeof scl === 'object' ? scl.z : scl)
+      const scaleVal = typeof scl === 'object' ? scl.x : scl
+      const sclInput = this.panel.querySelector('#scl_uniform_val')
+      if (sclInput) sclInput.value = Number(scaleVal).toFixed(2)
     }
   },
 
@@ -213,37 +234,30 @@ AFRAME.registerComponent('transform-logger', {
     const el = this.getTargetEl()
     if (!el) return
 
+    if (type === 'pos') {
+      const pos = el.getAttribute('position') || {x:0, y:0, z:0}
+      pos[axis] = val
+      el.setAttribute('position', `${pos.x} ${pos.y} ${pos.z}`)
+    } else if (type === 'rot') {
+      const rot = el.getAttribute('rotation') || {x:0, y:0, z:0}
+      rot[axis] = val
+      el.setAttribute('rotation', `${rot.x} ${rot.y} ${rot.z}`)
+    }
+  },
+
+  applyUniformScale(sVal) {
+    const el = this.getTargetEl()
+    if (!el) return
+
     if (this.selectedTarget === 'card') {
-      if (type === 'pos') {
-        const pos = el.getAttribute('position') || {x:0, y:0, z:0}
-        pos[axis] = val
-        el.setAttribute('position', `${pos.x} ${pos.y} ${pos.z}`)
-      } else if (type === 'rot') {
-        const rot = el.getAttribute('rotation') || {x:0, y:0, z:0}
-        rot[axis] = val
-        el.setAttribute('rotation', `${rot.x} ${rot.y} ${rot.z}`)
-      } else if (type === 'scl') {
-        if (axis === 'x') el.setAttribute('width', val)
-        if (axis === 'y') el.setAttribute('height', val)
-      }
+      // Scale width and height preserving 1.7918 aspect ratio
+      const newWidth = parseFloat((1.7918 * sVal).toFixed(4))
+      const newHeight = parseFloat((1.0 * sVal).toFixed(4))
+      el.setAttribute('width', newWidth)
+      el.setAttribute('height', newHeight)
     } else {
-      if (type === 'pos') {
-        const pos = el.getAttribute('position') || {x:0, y:0, z:0}
-        pos[axis] = val
-        el.setAttribute('position', `${pos.x} ${pos.y} ${pos.z}`)
-      } else if (type === 'rot') {
-        const rot = el.getAttribute('rotation') || {x:0, y:0, z:0}
-        rot[axis] = val
-        el.setAttribute('rotation', `${rot.x} ${rot.y} ${rot.z}`)
-      } else if (type === 'scl') {
-        const scl = el.getAttribute('scale') || {x:1, y:1, z:1}
-        if (typeof scl === 'object') {
-          scl[axis] = val
-          el.setAttribute('scale', `${scl.x} ${scl.y} ${scl.z}`)
-        } else {
-          el.setAttribute('scale', `${val} ${val} ${val}`)
-        }
-      }
+      // Uniform scale for watch gltf model
+      el.setAttribute('scale', `${sVal} ${sVal} ${sVal}`)
     }
   }
 })
