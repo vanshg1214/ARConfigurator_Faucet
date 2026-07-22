@@ -31,9 +31,10 @@
     </a-assets>
 
     <!-- Use our custom component for Extended Tracking (SLAM) -->
-    <a-entity persisting-image-target="name: watch-img">
-      <!-- Card Image Overlay (1:1 aspect ratio, flat on target surface Z=0) -->
+    <a-entity persisting-image-target="name: watch-img" transform-logger>
+      <!-- Card Image Overlay (1:1 aspect ratio) -->
       <a-image 
+        id="cardOverlay"
         src="#cardImg" 
         width="1" 
         height="1.7918" 
@@ -43,6 +44,7 @@
 
       <!-- Spawn the watch model right on top of the image target -->
       <a-entity 
+        id="watchEntity"
         gltf-model="#watchModel" 
         scale="8.5 8.5 8.5" 
         position="0.372 -0.009 -0.3" 
