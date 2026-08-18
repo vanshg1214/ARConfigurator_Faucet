@@ -2,113 +2,201 @@
 // Both models are loaded upfront at the same normalized size.
 // Switching is an instant visibility toggle — no reload, no flicker.
 
+// ---------------------------------------------------------------------------
+// Shared gesture state — single source of truth used by BOTH components below
+// ---------------------------------------------------------------------------
+const GestureState = {
+  twoFingerActive: false,
+};
+
+// ---------------------------------------------------------------------------
+// Custom 1-finger surface drag — replaces xrextras-hold-drag entirely.
+// Reads GestureState.twoFingerActive to freeze position during 2-finger ops.
+// ---------------------------------------------------------------------------
+AFRAME.registerComponent('custom-hold-drag', {
+  schema: {
+    groundId: { type: 'string', default: 'ground' },
+  },
+  init: function() {
+    this.dragging = false;
+    this.touchId = null;
+
+    this.onTouchStart = this.onTouchStart.bind(this);
+    this.onTouchMove  = this.onTouchMove.bind(this);
+    this.onTouchEnd   = this.onTouchEnd.bind(this);
+
+    window.addEventListener('touchstart', this.onTouchStart, { passive: false });
+    window.addEventListener('touchmove',  this.onTouchMove,  { passive: false });
+    window.addEventListener('touchend',   this.onTouchEnd,   { passive: false });
+    window.addEventListener('touchcancel',this.onTouchEnd,   { passive: false });
+
+    // Cache raycaster + camera
+    this._raycaster = new AFRAME.THREE.Raycaster();
+    this._plane = null;
+  },
+  remove: function() {
+    window.removeEventListener('touchstart', this.onTouchStart);
+    window.removeEventListener('touchmove',  this.onTouchMove);
+    window.removeEventListener('touchend',   this.onTouchEnd);
+    window.removeEventListener('touchcancel',this.onTouchEnd);
+  },
+
+  _hitGround: function(clientX, clientY) {
+    const camera = this.el.sceneEl.camera;
+    if (!camera) return null;
+
+    const canvas = this.el.sceneEl.canvas;
+    const rect = canvas.getBoundingClientRect();
+    const x =  ((clientX - rect.left) / rect.width)  * 2 - 1;
+    const y = -((clientY - rect.top)  / rect.height) * 2 + 1;
+
+    this._raycaster.setFromCamera({ x, y }, camera);
+
+    // Lazy-build the infinite ground plane at y=0
+    if (!this._plane) {
+      this._plane = new AFRAME.THREE.Plane(new AFRAME.THREE.Vector3(0, 1, 0), 0);
+    }
+    const hit = new AFRAME.THREE.Vector3();
+    const ok = this._raycaster.ray.intersectPlane(this._plane, hit);
+    return ok ? hit : null;
+  },
+
+  onTouchStart: function(e) {
+    // Only handle if it's a single-finger touch AND two-finger mode is not active
+    if (GestureState.twoFingerActive) return;
+    if (e.touches.length !== 1) return;
+    const t = e.touches[0];
+    const hit = this._hitGround(t.clientX, t.clientY);
+    if (!hit) return;
+    this.dragging = true;
+    this.touchId = t.identifier;
+  },
+
+  onTouchMove: function(e) {
+    if (!this.dragging || GestureState.twoFingerActive) return;
+
+    // Find the tracked finger
+    let t = null;
+    for (let i = 0; i < e.touches.length; i++) {
+      if (e.touches[i].identifier === this.touchId) { t = e.touches[i]; break; }
+    }
+    if (!t) return;
+
+    const hit = this._hitGround(t.clientX, t.clientY);
+    if (!hit) return;
+
+    // Move the entity to the hit point, keeping Y from existing position
+    const cur = this.el.object3D.position;
+    this.el.setAttribute('position', { x: hit.x, y: cur.y, z: hit.z });
+    e.preventDefault();
+  },
+
+  onTouchEnd: function(e) {
+    if (!this.dragging) return;
+    // Check if our tracked finger is still present
+    for (let i = 0; i < e.touches.length; i++) {
+      if (e.touches[i].identifier === this.touchId) return; // still down
+    }
+    this.dragging = false;
+    this.touchId = null;
+  },
+});
+
+// ---------------------------------------------------------------------------
+// Exclusive 2-finger transform — scale OR rotate, never simultaneously.
+// Sets GestureState.twoFingerActive so custom-hold-drag freezes position.
+// ---------------------------------------------------------------------------
 AFRAME.registerComponent('exclusive-two-finger-transform', {
   init: function() {
-    this.mode = 'none'; // 'none', 'pending', 'scale', 'rotate'
+    this.mode = 'none'; // 'none' | 'pending' | 'scale' | 'rotate'
     this.startDist = 0;
     this.startAngle = 0;
     this.lastDist = 0;
     this.lastAngle = 0;
-    
-    // Thresholds to lock into a specific mode
-    this.scaleThreshold = 15; // pixels
-    this.rotateThreshold = 8; // degrees
+
+    this.scaleThreshold  = 15; // px change before locking to scale
+    this.rotateThreshold = 8;  // deg change before locking to rotate
 
     this.onTouchStart = this.onTouchStart.bind(this);
-    this.onTouchMove = this.onTouchMove.bind(this);
-    this.onTouchEnd = this.onTouchEnd.bind(this);
+    this.onTouchMove  = this.onTouchMove.bind(this);
+    this.onTouchEnd   = this.onTouchEnd.bind(this);
 
-    // Use capture to intercept before other components see the touches
-    window.addEventListener('touchstart', this.onTouchStart, {capture: true, passive: false});
-    window.addEventListener('touchmove', this.onTouchMove, {capture: true, passive: false});
-    window.addEventListener('touchend', this.onTouchEnd, {capture: true, passive: false});
-    window.addEventListener('touchcancel', this.onTouchEnd, {capture: true, passive: false});
+    // Capture phase so we intercept before custom-hold-drag
+    window.addEventListener('touchstart',  this.onTouchStart, { capture: true, passive: false });
+    window.addEventListener('touchmove',   this.onTouchMove,  { capture: true, passive: false });
+    window.addEventListener('touchend',    this.onTouchEnd,   { capture: true, passive: false });
+    window.addEventListener('touchcancel', this.onTouchEnd,   { capture: true, passive: false });
   },
   remove: function() {
-    window.removeEventListener('touchstart', this.onTouchStart, {capture: true});
-    window.removeEventListener('touchmove', this.onTouchMove, {capture: true});
-    window.removeEventListener('touchend', this.onTouchEnd, {capture: true});
-    window.removeEventListener('touchcancel', this.onTouchEnd, {capture: true});
+    window.removeEventListener('touchstart',  this.onTouchStart, { capture: true });
+    window.removeEventListener('touchmove',   this.onTouchMove,  { capture: true });
+    window.removeEventListener('touchend',    this.onTouchEnd,   { capture: true });
+    window.removeEventListener('touchcancel', this.onTouchEnd,   { capture: true });
   },
-  getDistance: function(t1, t2) {
+  _dist: function(t1, t2) {
     const dx = t1.clientX - t2.clientX;
     const dy = t1.clientY - t2.clientY;
-    return Math.sqrt(dx*dx + dy*dy);
+    return Math.sqrt(dx * dx + dy * dy);
   },
-  getAngle: function(t1, t2) {
+  _angle: function(t1, t2) {
     return Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * 180 / Math.PI;
   },
   onTouchStart: function(e) {
-    if (e.touches.length >= 2) {
-      if (this.mode === 'none') {
-        this.mode = 'pending';
-        this.startDist = this.getDistance(e.touches[0], e.touches[1]);
-        this.startAngle = this.getAngle(e.touches[0], e.touches[1]);
-        this.lastDist = this.startDist;
-        this.lastAngle = this.startAngle;
-        
-        // COMPLETELY obliterate drag so the object cannot jump!
-        this.el.removeAttribute('xrextras-hold-drag');
-      }
+    if (e.touches.length >= 2 && this.mode === 'none') {
+      // Activate 2-finger lock — this freezes custom-hold-drag immediately
+      GestureState.twoFingerActive = true;
+      this.mode = 'pending';
+      this.startDist  = this._dist(e.touches[0], e.touches[1]);
+      this.startAngle = this._angle(e.touches[0], e.touches[1]);
+      this.lastDist   = this.startDist;
+      this.lastAngle  = this.startAngle;
+      // Consume the event so nothing else reacts
+      e.stopPropagation();
     }
   },
   onTouchMove: function(e) {
-    if (this.mode !== 'none' && e.touches.length >= 2) {
-      const currentDist = this.getDistance(e.touches[0], e.touches[1]);
-      const currentAngle = this.getAngle(e.touches[0], e.touches[1]);
-      
-      if (this.mode === 'pending') {
-        const distDelta = Math.abs(currentDist - this.startDist);
-        let angleDelta = Math.abs(currentAngle - this.startAngle);
-        if (angleDelta > 180) angleDelta = 360 - angleDelta;
+    if (!GestureState.twoFingerActive || e.touches.length < 2) return;
 
-        if (distDelta > this.scaleThreshold && distDelta > angleDelta * 3) {
-          this.mode = 'scale';
-        } else if (angleDelta > this.rotateThreshold) {
-          this.mode = 'rotate';
-        }
-      }
-      
-      if (this.mode === 'scale') {
-        const scaleMultiplier = currentDist / this.lastDist;
-        const currentScale = this.el.object3D.scale;
-        this.el.setAttribute('scale', `${currentScale.x * scaleMultiplier} ${currentScale.y * scaleMultiplier} ${currentScale.z * scaleMultiplier}`);
-        e.preventDefault();
-        e.stopPropagation();
-      } else if (this.mode === 'rotate') {
-        let angleDiff = currentAngle - this.lastAngle;
-        if (angleDiff > 180) angleDiff -= 360;
-        if (angleDiff < -180) angleDiff += 360;
-        
-        // Rotate around Y axis
-        this.el.object3D.rotation.y -= angleDiff * (Math.PI / 180);
-        e.preventDefault();
-        e.stopPropagation();
-      }
-      
-      this.lastDist = currentDist;
-      this.lastAngle = currentAngle;
-    } else if (this.mode !== 'none') {
-      // If we are in scale/rotate, block rogue single finger drags!
+    const curDist  = this._dist(e.touches[0], e.touches[1]);
+    const curAngle = this._angle(e.touches[0], e.touches[1]);
+
+    if (this.mode === 'pending') {
+      const dd = Math.abs(curDist - this.startDist);
+      let   da = Math.abs(curAngle - this.startAngle);
+      if (da > 180) da = 360 - da;
+      if      (dd > this.scaleThreshold  && dd > da * 3) this.mode = 'scale';
+      else if (da > this.rotateThreshold)                 this.mode = 'rotate';
+    }
+
+    if (this.mode === 'scale') {
+      const ratio = curDist / this.lastDist;
+      const s = this.el.object3D.scale;
+      this.el.object3D.scale.set(s.x * ratio, s.y * ratio, s.z * ratio);
+    } else if (this.mode === 'rotate') {
+      let diff = curAngle - this.lastAngle;
+      if (diff >  180) diff -= 360;
+      if (diff < -180) diff += 360;
+      this.el.object3D.rotation.y -= diff * (Math.PI / 180);
+    }
+
+    this.lastDist  = curDist;
+    this.lastAngle = curAngle;
+
+    e.preventDefault();
+    e.stopPropagation();
+  },
+  onTouchEnd: function(e) {
+    if (!GestureState.twoFingerActive) return;
+    // Release only when truly no fingers remain
+    if (e.touches.length === 0) {
+      GestureState.twoFingerActive = false;
+      this.mode = 'none';
+    } else {
+      // A finger lifted but at least one still down — keep blocking
       e.preventDefault();
       e.stopPropagation();
     }
   },
-  onTouchEnd: function(e) {
-    if (e.touches.length === 0) {
-      if (this.mode !== 'none') {
-        // Only re-enable drag once ALL fingers are off the screen!
-        // This guarantees no trailing 1-finger drag jumps.
-        this.el.setAttribute('xrextras-hold-drag', '');
-      }
-      this.mode = 'none';
-    } else if (this.mode !== 'none') {
-      // A finger lifted, but 1 is still on screen. 
-      // Block this event so xrextras doesn't glitch!
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  }
 });
 
 export const tapPlaceComponent = {
@@ -183,8 +271,9 @@ export const tapPlaceComponent = {
         this.wrapperEntity = document.createElement('a-entity')
         this.wrapperEntity.setAttribute('position', touchPoint)
         this.wrapperEntity.setAttribute('rotation', `0 ${rotationY} 0`)
-        // Enforce exclusive transformations: hold-drag (1 finger), our custom scale/rotate (2 fingers)
-        this.wrapperEntity.setAttribute('xrextras-hold-drag', '')
+        // Custom 1-finger drag (position-locked during 2-finger ops via GestureState)
+        this.wrapperEntity.setAttribute('custom-hold-drag', '')
+        // Custom 2-finger exclusive scale / rotate (sets GestureState.twoFingerActive)
         this.wrapperEntity.setAttribute('exclusive-two-finger-transform', '')
         
         // Add cantap class so the raycaster can intersect the object for dragging
