@@ -6,12 +6,6 @@ export const tapPlaceComponent = {
   init() {
     this.currentModelId = '#washingMachineModel'
 
-    // Base scales that were previously determined to look correct in AR
-    this.baseScales = {
-      '#washingMachineModel': 3.0,
-      '#airCoolerModel':      3.0,
-    }
-
     this.prompt = document.getElementById('promptText')
     this.wrapperEntity = null
     this.machineEntity = null
@@ -80,52 +74,57 @@ export const tapPlaceComponent = {
         this.wrapperEntity = document.createElement('a-entity')
         this.wrapperEntity.setAttribute('position', touchPoint)
         this.wrapperEntity.setAttribute('rotation', `0 ${rotationY} 0`)
+        // We attach pinch-to-scale, two-finger-rotate, and hold-to-drag
         this.wrapperEntity.setAttribute('xrextras-two-finger-rotate', '')
         this.wrapperEntity.setAttribute('xrextras-pinch-scale', `min: 0.1; max: 10`)
-        this.wrapperEntity.setAttribute('scale', '1 1 1')
+        this.wrapperEntity.setAttribute('xrextras-hold-drag', '')
+        
+        // Add cantap class so the raycaster can intersect the object for dragging
+        this.wrapperEntity.classList.add('cantap')
 
-        // Washing machine — use predetermined base scale
-        const mScale = this.baseScales['#washingMachineModel']
-        this.machineEntity = document.createElement('a-entity')
-        this.machineEntity.setAttribute('gltf-model', '#washingMachineModel')
-        this.machineEntity.setAttribute('scale', `${mScale} ${mScale} ${mScale}`)
-        this.machineEntity.setAttribute('shadow', { receive: false })
-        this.machineEntity.setAttribute('visible', 'true')
-
-        // Air cooler — use predetermined base scale
-        const cScale = this.baseScales['#airCoolerModel']
-        this.coolerEntity = document.createElement('a-entity')
-        this.coolerEntity.setAttribute('gltf-model', '#airCoolerModel')
-        this.coolerEntity.setAttribute('scale', `${cScale} ${cScale} ${cScale}`)
-        this.coolerEntity.setAttribute('shadow', { receive: false })
-        this.coolerEntity.setAttribute('visible', 'false')
-
-        // Auto-center function to fix models with off-center origins
-        const autoCenter = (entity) => {
+        // Auto-center and auto-scale function
+        const autoCenterAndScale = (entity, targetHeight) => {
+          entity.setAttribute('scale', '1 1 1')
           entity.addEventListener('model-loaded', () => {
             const mesh = entity.getObject3D('mesh')
             if (!mesh) return
             
-            // Calculate bounding box in world space
-            const box = new AFRAME.THREE.Box3().setFromObject(mesh)
+            // Calculate native physical size
+            const nativeBox = new AFRAME.THREE.Box3().setFromObject(mesh)
+            const nativeSize = new AFRAME.THREE.Vector3()
+            nativeBox.getSize(nativeSize)
+            
+            // Target height is 0.9 meters (90cm)
+            const scaleFactor = targetHeight / nativeSize.y
+            entity.setAttribute('scale', `${scaleFactor} ${scaleFactor} ${scaleFactor}`)
+            
+            // Recalculate bounding box with new scale
+            const scaledBox = new AFRAME.THREE.Box3().setFromObject(mesh)
             const worldCenter = new AFRAME.THREE.Vector3()
-            box.getCenter(worldCenter)
+            scaledBox.getCenter(worldCenter)
             
-            // Find the bottom-center point in world space
-            const bottomCenterWorld = new AFRAME.THREE.Vector3(worldCenter.x, box.min.y, worldCenter.z)
+            // Find bottom-center point in world space
+            const bottomCenterWorld = new AFRAME.THREE.Vector3(worldCenter.x, scaledBox.min.y, worldCenter.z)
             
-            // Convert to local space of the entity
+            // Shift mesh locally to rest perfectly on the ground origin
             const localBottomCenter = entity.object3D.worldToLocal(bottomCenterWorld)
-            
-            // Shift the mesh so its bottom-center sits exactly at the entity's origin
             mesh.position.set(-localBottomCenter.x, -localBottomCenter.y, -localBottomCenter.z)
           })
         }
 
-        autoCenter(this.machineEntity)
-        autoCenter(this.coolerEntity)
+        const createModel = (id) => {
+          const entity = document.createElement('a-entity')
+          entity.setAttribute('gltf-model', id)
+          entity.setAttribute('shadow', 'receive: false')
+          autoCenterAndScale(entity, 0.9)
+          return entity
+        }
 
-        // Add them to wrapper and scene
+        this.machineEntity = createModel('#washingMachineModel')
+        this.coolerEntity = createModel('#airCoolerModel')
+        this.coolerEntity.setAttribute('visible', 'false')
+
+        // We don't need manual recentering since autoCenterAndScale handles it perfectly natively
         this.wrapperEntity.appendChild(this.machineEntity)
         this.wrapperEntity.appendChild(this.coolerEntity)
         this.el.sceneEl.appendChild(this.wrapperEntity)
