@@ -20,6 +20,7 @@ AFRAME.registerComponent('custom-hold-drag', {
   init: function() {
     this.dragging = false;
     this.touchId = null;
+    this.dragOffset = new AFRAME.THREE.Vector3();
 
     this.onTouchStart = this.onTouchStart.bind(this);
     this.onTouchMove  = this.onTouchMove.bind(this);
@@ -60,16 +61,41 @@ AFRAME.registerComponent('custom-hold-drag', {
     const ok = this._raycaster.ray.intersectPlane(this._plane, hit);
     return ok ? hit : null;
   },
+  
+  _hitObject: function(clientX, clientY) {
+    const camera = this.el.sceneEl.camera;
+    if (!camera) return false;
+
+    const canvas = this.el.sceneEl.canvas;
+    const rect = canvas.getBoundingClientRect();
+    const x =  ((clientX - rect.left) / rect.width)  * 2 - 1;
+    const y = -((clientY - rect.top)  / rect.height) * 2 + 1;
+
+    this._raycaster.setFromCamera({ x, y }, camera);
+    const intersects = this._raycaster.intersectObject(this.el.object3D, true);
+    // THREE.Raycaster respects object3D.visible automatically
+    return intersects.length > 0;
+  },
 
   onTouchStart: function(e) {
     // Only handle if it's a single-finger touch AND two-finger mode is not active
     if (GestureState.twoFingerActive) return;
     if (e.touches.length !== 1) return;
     const t = e.touches[0];
+    
+    // MUST physically touch the object to initiate a drag
+    if (!this._hitObject(t.clientX, t.clientY)) return;
+
     const hit = this._hitGround(t.clientX, t.clientY);
     if (!hit) return;
+    
     this.dragging = true;
     this.touchId = t.identifier;
+    
+    // Calculate the offset between the object's current center and the tap point
+    // This totally prevents the "snapping to center" bug!
+    const curPos = this.el.object3D.position.clone();
+    this.dragOffset.subVectors(curPos, hit);
   },
 
   onTouchMove: function(e) {
@@ -85,9 +111,10 @@ AFRAME.registerComponent('custom-hold-drag', {
     const hit = this._hitGround(t.clientX, t.clientY);
     if (!hit) return;
 
-    // Move the entity to the hit point, keeping Y from existing position
+    // Move the entity to the hit point + offset, keeping Y from existing position
+    const newPos = hit.add(this.dragOffset);
     const cur = this.el.object3D.position;
-    this.el.setAttribute('position', { x: hit.x, y: cur.y, z: hit.z });
+    this.el.setAttribute('position', { x: newPos.x, y: cur.y, z: newPos.z });
     e.preventDefault();
   },
 
