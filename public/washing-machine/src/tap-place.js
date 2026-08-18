@@ -7,6 +7,7 @@
 // ---------------------------------------------------------------------------
 const GestureState = {
   twoFingerActive: false,
+  twoFingerEndTime: 0, // Timestamp when the last 2-finger gesture ended
 };
 
 // ---------------------------------------------------------------------------
@@ -80,6 +81,9 @@ AFRAME.registerComponent('custom-hold-drag', {
   onTouchStart: function(e) {
     // Only handle if it's a single-finger touch AND two-finger mode is not active
     if (GestureState.twoFingerActive) return;
+    // Block drag for 0.5 seconds after a scale/rotate finishes!
+    if (Date.now() - GestureState.twoFingerEndTime < 500) return;
+    
     if (e.touches.length !== 1) return;
     const t = e.touches[0];
     
@@ -217,6 +221,7 @@ AFRAME.registerComponent('exclusive-two-finger-transform', {
     // Release only when truly no fingers remain
     if (e.touches.length === 0) {
       GestureState.twoFingerActive = false;
+      GestureState.twoFingerEndTime = Date.now(); // Start the 0.5s cooldown block!
       this.mode = 'none';
     } else {
       // A finger lifted but at least one still down — keep blocking
