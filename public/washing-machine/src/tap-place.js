@@ -8,6 +8,7 @@
 const GestureState = {
   twoFingerActive: false,
   twoFingerEndTime: 0, // Timestamp when the last 2-finger gesture ended
+  dragComponent: null, // Reference to the active custom-hold-drag instance
 };
 
 // ---------------------------------------------------------------------------
@@ -22,6 +23,7 @@ AFRAME.registerComponent('custom-hold-drag', {
     this.dragging = false;
     this.touchId = null;
     this.dragOffset = new AFRAME.THREE.Vector3();
+    GestureState.dragComponent = this; // Register for cross-component cancel
 
     this.onTouchStart = this.onTouchStart.bind(this);
     this.onTouchMove  = this.onTouchMove.bind(this);
@@ -103,7 +105,14 @@ AFRAME.registerComponent('custom-hold-drag', {
   },
 
   onTouchMove: function(e) {
+    // Triple guard: dragging flag, two-finger active, AND 0.5s cooldown after gesture ends
     if (!this.dragging || GestureState.twoFingerActive) return;
+    if (Date.now() - GestureState.twoFingerEndTime < 500) {
+      // Cooldown is active — force-cancel this drag so it can never resume
+      this.dragging = false;
+      this.touchId = null;
+      return;
+    }
 
     // Find the tracked finger
     let t = null;
@@ -176,13 +185,20 @@ AFRAME.registerComponent('exclusive-two-finger-transform', {
     if (e.touches.length >= 2 && this.mode === 'none') {
       // Activate 2-finger lock — this freezes custom-hold-drag immediately
       GestureState.twoFingerActive = true;
+      // CRITICAL: Force-cancel any in-progress 1-finger drag RIGHT NOW.
+      // The first of these two fingers may have already started a drag before
+      // twoFingerActive was set. Kill it immediately so it can never resume.
+      if (GestureState.dragComponent) {
+        GestureState.dragComponent.dragging = false;
+        GestureState.dragComponent.touchId = null;
+      }
       this.mode = 'pending';
       this.startDist  = this._dist(e.touches[0], e.touches[1]);
       this.startAngle = this._angle(e.touches[0], e.touches[1]);
       this.lastDist   = this.startDist;
       this.lastAngle  = this.startAngle;
       // Consume the event so nothing else reacts
-      e.stopPropagation();
+      e.stopImmediatePropagation();
     }
   },
   onTouchMove: function(e) {
