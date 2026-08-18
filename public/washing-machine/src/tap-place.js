@@ -83,7 +83,7 @@ export const tapPlaceComponent = {
         this.wrapperEntity.classList.add('cantap')
 
         // Auto-center and auto-scale function
-        const autoCenterAndScale = (entity, targetHeight) => {
+        const autoCenterAndScale = (entity, targetHeight, skipCenter = false) => {
           entity.setAttribute('scale', '1 1 1')
           entity.addEventListener('model-loaded', () => {
             const mesh = entity.getObject3D('mesh')
@@ -98,30 +98,35 @@ export const tapPlaceComponent = {
             const scaleFactor = targetHeight / nativeSize.y
             entity.setAttribute('scale', `${scaleFactor} ${scaleFactor} ${scaleFactor}`)
             
-            // Recalculate bounding box with new scale
-            const scaledBox = new AFRAME.THREE.Box3().setFromObject(mesh)
-            const worldCenter = new AFRAME.THREE.Vector3()
-            scaledBox.getCenter(worldCenter)
-            
-            // Find bottom-center point in world space
-            const bottomCenterWorld = new AFRAME.THREE.Vector3(worldCenter.x, scaledBox.min.y, worldCenter.z)
-            
-            // Shift mesh locally to rest perfectly on the ground origin
-            const localBottomCenter = entity.object3D.worldToLocal(bottomCenterWorld)
-            mesh.position.set(-localBottomCenter.x, -localBottomCenter.y, -localBottomCenter.z)
+            if (!skipCenter) {
+              // Recalculate bounding box with new scale
+              const scaledBox = new AFRAME.THREE.Box3().setFromObject(mesh)
+              const worldCenter = new AFRAME.THREE.Vector3()
+              scaledBox.getCenter(worldCenter)
+              
+              // Find bottom-center point in world space
+              const bottomCenterWorld = new AFRAME.THREE.Vector3(worldCenter.x, scaledBox.min.y, worldCenter.z)
+              
+              // Shift mesh locally to rest perfectly on the ground origin
+              const localBottomCenter = entity.object3D.worldToLocal(bottomCenterWorld)
+              mesh.position.set(-localBottomCenter.x, -localBottomCenter.y, -localBottomCenter.z)
+            }
           })
         }
 
-        const createModel = (id) => {
+        const createModel = (id, skipCenter = false) => {
           const entity = document.createElement('a-entity')
           entity.setAttribute('gltf-model', id)
           entity.setAttribute('shadow', 'receive: false')
-          autoCenterAndScale(entity, 0.9)
+          autoCenterAndScale(entity, 0.9, skipCenter)
           return entity
         }
 
-        this.machineEntity = createModel('#washingMachineModel')
-        this.coolerEntity = createModel('#airCoolerModel')
+        this.machineEntity = createModel('#washingMachineModel', false)
+        
+        // Air cooler has a corrupted bounding box containing animated faucet nodes, causing a massive center offset.
+        // We skip the auto-centering for it and rely on its native origin.
+        this.coolerEntity = createModel('#airCoolerModel', true)
         this.coolerEntity.setAttribute('visible', 'false')
 
         // We don't need manual recentering since autoCenterAndScale handles it perfectly natively
