@@ -1,21 +1,20 @@
 const fs = require('fs');
 
-function inspectGlb(filePath) {
+function inspectGLB(filePath) {
   const buffer = fs.readFileSync(filePath);
-  const magic = buffer.readUInt32LE(0);
-  if (magic !== 0x46546C67) {
-    throw new Error('Not a GLB file');
-  }
   const chunk0Length = buffer.readUInt32LE(12);
   const jsonString = buffer.toString('utf8', 20, 20 + chunk0Length);
-  const json = JSON.parse(jsonString);
-  
-  console.log("Nodes:");
-  if (json.nodes) {
-    json.nodes.forEach((node, idx) => {
-      console.log(`[${idx}] Name: ${node.name || 'unnamed'}`);
-    });
-  }
+  const gltf = JSON.parse(jsonString);
+
+  console.log('Meshes:');
+  gltf.meshes.forEach((mesh, index) => {
+    console.log(`[${index}] Name: ${mesh.name}`);
+  });
+
+  console.log('\nNodes:');
+  gltf.nodes.forEach((node, index) => {
+    console.log(`[${index}] Name: ${node.name}, Mesh: ${node.mesh}`);
+  });
 }
 
-inspectGlb('C:\\Users\\Sujal\\Desktop\\Freelance\\8thwallDemo\\public\\configurator\\src\\assets\\Faucet glb (1).glb');
+inspectGLB(process.argv[2]);

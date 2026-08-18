@@ -82,51 +82,58 @@ export const tapPlaceComponent = {
         // Add cantap class so the raycaster can intersect the object for dragging
         this.wrapperEntity.classList.add('cantap')
 
-        // Auto-center and auto-scale function
-        const autoCenterAndScale = (entity, targetHeight, skipCenter = false) => {
+        // Dynamic auto-center and auto-scale function
+        // Scales models to true physical height and exactly centers them based on their bounding box.
+        const autoCenterAndScale = (entity, targetHeight) => {
           entity.setAttribute('scale', '1 1 1')
           entity.addEventListener('model-loaded', () => {
             const mesh = entity.getObject3D('mesh')
             if (!mesh) return
+            
+            // Force matrix update before measuring raw geometry bounds
+            entity.object3D.updateMatrixWorld(true)
             
             // Calculate native physical size
             const nativeBox = new AFRAME.THREE.Box3().setFromObject(mesh)
             const nativeSize = new AFRAME.THREE.Vector3()
             nativeBox.getSize(nativeSize)
             
-            // Target height is 0.9 meters (90cm)
+            // Apply scale factor based on true raw height
             const scaleFactor = targetHeight / nativeSize.y
             entity.setAttribute('scale', `${scaleFactor} ${scaleFactor} ${scaleFactor}`)
             
-            if (!skipCenter) {
-              // Recalculate bounding box with new scale
-              const scaledBox = new AFRAME.THREE.Box3().setFromObject(mesh)
-              const worldCenter = new AFRAME.THREE.Vector3()
-              scaledBox.getCenter(worldCenter)
-              
-              // Find bottom-center point in world space
-              const bottomCenterWorld = new AFRAME.THREE.Vector3(worldCenter.x, scaledBox.min.y, worldCenter.z)
-              
-              // Shift mesh locally to rest perfectly on the ground origin
-              const localBottomCenter = entity.object3D.worldToLocal(bottomCenterWorld)
-              mesh.position.set(-localBottomCenter.x, -localBottomCenter.y, -localBottomCenter.z)
-            }
+            // CRITICAL: Force matrix update AGAIN because we changed the scale!
+            // Without this, the bounding box and world-to-local math will use stale unscaled matrices
+            // causing models to disappear or have massive offsets.
+            entity.object3D.updateMatrixWorld(true)
+            
+            // Recalculate bounding box with new scale applied
+            const scaledBox = new AFRAME.THREE.Box3().setFromObject(mesh)
+            const worldCenter = new AFRAME.THREE.Vector3()
+            scaledBox.getCenter(worldCenter)
+            
+            // Find bottom-center point in world space
+            const bottomCenterWorld = new AFRAME.THREE.Vector3(worldCenter.x, scaledBox.min.y, worldCenter.z)
+            
+            // Convert to local space and shift mesh to rest perfectly on the entity's ground origin
+            const localBottomCenter = entity.object3D.worldToLocal(bottomCenterWorld)
+            mesh.position.set(-localBottomCenter.x, -localBottomCenter.y, -localBottomCenter.z)
           })
         }
 
-        const createModel = (id, skipCenter = false) => {
+        const createModel = (id, height) => {
           const entity = document.createElement('a-entity')
           entity.setAttribute('gltf-model', id)
           entity.setAttribute('shadow', 'receive: false')
-          autoCenterAndScale(entity, 0.9, skipCenter)
+          autoCenterAndScale(entity, height)
           return entity
         }
 
-        this.machineEntity = createModel('#washingMachineModel', false)
+        // Washing Machine: ~0.85 meters tall in real life
+        this.machineEntity = createModel('#washingMachineModel', 0.85)
         
-        // Air cooler has a corrupted bounding box containing animated faucet nodes, causing a massive center offset.
-        // We skip the auto-centering for it and rely on its native origin.
-        this.coolerEntity = createModel('#airCoolerModel', true)
+        // Air Cooler: ~1.0 meters tall in real life
+        this.coolerEntity = createModel('#airCoolerModel', 1.0)
         this.coolerEntity.setAttribute('visible', 'false')
 
         // We don't need manual recentering since autoCenterAndScale handles it perfectly natively
