@@ -51,6 +51,6 @@ function readGlbSize(filePath) {
   console.log('---');
 }
 
-const dir = 'C:\\Users\\Sujal\\Desktop\\Freelance\\8thwallDemo\\public\\configurator\\src\\assets\\';
-readGlbSize(dir + 'DeltaFaucet_V5_Decimated_Animated.glb');
-readGlbSize(dir + 'Faucet glb (1).glb');
+const dir = 'C:\\Users\\Sujal\\Desktop\\Freelance\\8thwallDemo\\public\\washing-machine\\src\\assets\\';
+readGlbSize(dir + 'drum_washing_machine.glb');
+readGlbSize(dir + 'orient_air_cooler.glb');

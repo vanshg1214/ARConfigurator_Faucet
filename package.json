@@ -7,7 +7,8 @@
     "public/configurator",
     "public/exploded-view",
     "public/image-tracking",
-    "public/sofa-configurator"
+    "public/sofa-configurator",
+    "public/washing-machine"
   ],
   "scripts": {
     "dev": "next dev",

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>MATRI6 AR</title>
+  <meta itemprop="name" content="MATRI6 AR">
+  <meta name="twitter:title" content="MATRI6 AR">
+  <meta property="og:title" content="A-Frame: Tap to Place Ground">
+  <meta property="og:site_name" content="A-Frame: Tap to Place Ground">
+  <meta name="description"
+    content="This example allows the user to grow cacti 🌵  by tapping or clicking the ground. Showcases raycasting, spawning objects, and importing a 3D model.">
+  <meta itemprop="description"
+    content="This example allows the user to grow cacti 🌵  by tapping or clicking the ground. Showcases raycasting, spawning objects, and importing a 3D model.">
+  <meta property="og:description"
+    content="This example allows the user to grow cacti 🌵  by tapping or clicking the ground. Showcases raycasting, spawning objects, and importing a 3D model.">
+  <meta name="twitter:description"
+    content="This example allows the user to grow cacti 🌵  by tapping or clicking the ground. Showcases raycasting, spawning objects, and importing a 3D model.">
+  <meta property="og:image" content="https://8thwall.org/aframe-world-effects/assets/preview.gif" />
+
+  <script crossorigin="anonymous" src="./external/scripts/8frame-1.5.0.min.js"></script>
+  <script src="/spatial-extras.js" crossorigin="anonymous"></script>
+  <script src="/spatial-landing.js" crossorigin="anonymous"></script>
+  <script src="/spatial-engine.js" crossorigin="anonymous" async="true"
+    data-preload-chunks="slam"></script>
+</head>
+
+<body>
+  <script src="./app.bundle.js"></script>
+  <!-- body.html is optional; elements will be added to your html body after app.js is loaded. -->
+
+  <div class="over">
+    <span id="promptText">Tap To Place Model</span>
+  </div>
+
+  <div id="modelSwitcher" class="button-container" style="display: none; justify-content: center; gap: 10px;">
+    <button id="btnMachine" class="action-btn active">Washing Machine</button>
+    <button id="btnCooler" class="action-btn">Air Cooler</button>
+  </div>
+
+  <!-- Add the tap-place component to the scene so it has an effect -->
+  <a-scene xrextras-gesture-detector tap-place landing-page xrextras-loading xrextras-runtime-error renderer="colorManagement:true" xrweb="
+    allowedDevices: any;
+    defaultEnvironmentFogIntensity: 0.5; 
+    defaultEnvironmentFloorTexture: #groundTex; 
+    defaultEnvironmentFloorColor: #FFF;
+    defaultEnvironmentSkyBottomColor: #B4C4CC; 
+    defaultEnvironmentSkyTopColor: #5ac8fa;
+    defaultEnvironmentSkyGradientStrength: 0.5;">
+
+    <!-- We can define assets here to be loaded when A-Frame initializes -->
+    <a-assets>
+      <img id="groundTex" src="assets/sand.jpg">
+      <a-asset-item id="washingMachineModel" src="assets/drum_washing_machine.glb"></a-asset-item>
+      <a-asset-item id="airCoolerModel" src="assets/orient_air_cooler.glb"></a-asset-item>
+    </a-assets>
+
+    <!-- The raycaster will emit mouse events on scene objects specified with the cantap class -->
+    <a-camera id="camera" position="0 8 8" raycaster="objects: .cantap" cursor="
+      fuse: false;
+      rayOrigin: mouse;">
+      <a-entity light="type: directional; intensity: 0.4;" position="0 0 0"></a-entity>
+    </a-camera>
+
+    <a-entity light="
+      type: directional;
+      intensity: 0.4;
+      castShadow: true;
+      shadowMapHeight:2048;
+      shadowMapWidth:2048;
+      shadowCameraTop: 40;
+      shadowCameraBottom: -40;
+      shadowCameraRight: 40;
+      shadowCameraLeft: -40;
+      target: #camera" xrextras-attach="target: camera; offset: 8 15 4" position="1 4.3 2.5" shadow>
+    </a-entity>
+
+    <a-light type="hemisphere" color="#ffffff" ground-color="#8c8c8c" intensity="0.4"></a-light>
+
+    <!-- Adding the cantap class allows the ground to be clicked -->
+    <a-box id="ground" class="cantap" scale="1000 2 1000" position="0 -0.99 0"
+      material="shader: shadow; transparent: true; opacity: 0.4" shadow>
+    </a-box>
+  </a-scene>
+
+</body>
+
+</html>
