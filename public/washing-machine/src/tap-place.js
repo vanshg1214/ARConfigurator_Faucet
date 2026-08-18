@@ -4,7 +4,7 @@
 
 AFRAME.registerComponent('exclusive-two-finger-transform', {
   init: function() {
-    this.mode = 'none'; // 'scale', 'rotate'
+    this.mode = 'none'; // 'none', 'pending', 'scale', 'rotate'
     this.startDist = 0;
     this.startAngle = 0;
     this.lastDist = 0;
@@ -18,14 +18,17 @@ AFRAME.registerComponent('exclusive-two-finger-transform', {
     this.onTouchMove = this.onTouchMove.bind(this);
     this.onTouchEnd = this.onTouchEnd.bind(this);
 
-    window.addEventListener('touchstart', this.onTouchStart, {passive: false});
-    window.addEventListener('touchmove', this.onTouchMove, {passive: false});
-    window.addEventListener('touchend', this.onTouchEnd, {passive: false});
+    // Use capture to intercept before other components see the touches
+    window.addEventListener('touchstart', this.onTouchStart, {capture: true, passive: false});
+    window.addEventListener('touchmove', this.onTouchMove, {capture: true, passive: false});
+    window.addEventListener('touchend', this.onTouchEnd, {capture: true, passive: false});
+    window.addEventListener('touchcancel', this.onTouchEnd, {capture: true, passive: false});
   },
   remove: function() {
-    window.removeEventListener('touchstart', this.onTouchStart);
-    window.removeEventListener('touchmove', this.onTouchMove);
-    window.removeEventListener('touchend', this.onTouchEnd);
+    window.removeEventListener('touchstart', this.onTouchStart, {capture: true});
+    window.removeEventListener('touchmove', this.onTouchMove, {capture: true});
+    window.removeEventListener('touchend', this.onTouchEnd, {capture: true});
+    window.removeEventListener('touchcancel', this.onTouchEnd, {capture: true});
   },
   getDistance: function(t1, t2) {
     const dx = t1.clientX - t2.clientX;
@@ -36,53 +39,74 @@ AFRAME.registerComponent('exclusive-two-finger-transform', {
     return Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * 180 / Math.PI;
   },
   onTouchStart: function(e) {
-    if (e.touches.length === 2) {
-      this.mode = 'pending';
-      this.startDist = this.getDistance(e.touches[0], e.touches[1]);
-      this.startAngle = this.getAngle(e.touches[0], e.touches[1]);
-      this.lastDist = this.startDist;
-      this.lastAngle = this.startAngle;
-    } else {
-      this.mode = 'none';
+    if (e.touches.length >= 2) {
+      if (this.mode === 'none') {
+        this.mode = 'pending';
+        this.startDist = this.getDistance(e.touches[0], e.touches[1]);
+        this.startAngle = this.getAngle(e.touches[0], e.touches[1]);
+        this.lastDist = this.startDist;
+        this.lastAngle = this.startAngle;
+        
+        // COMPLETELY obliterate drag so the object cannot jump!
+        this.el.removeAttribute('xrextras-hold-drag');
+      }
     }
   },
   onTouchMove: function(e) {
-    if (e.touches.length !== 2) return;
-    
-    const currentDist = this.getDistance(e.touches[0], e.touches[1]);
-    const currentAngle = this.getAngle(e.touches[0], e.touches[1]);
-    
-    if (this.mode === 'pending') {
-      const distDelta = Math.abs(currentDist - this.startDist);
-      let angleDelta = Math.abs(currentAngle - this.startAngle);
-      if (angleDelta > 180) angleDelta = 360 - angleDelta;
-
-      if (distDelta > this.scaleThreshold && distDelta > angleDelta * 3) {
-        this.mode = 'scale';
-      } else if (angleDelta > this.rotateThreshold) {
-        this.mode = 'rotate';
-      }
-    }
-    
-    if (this.mode === 'scale') {
-      const scaleMultiplier = currentDist / this.lastDist;
-      const currentScale = this.el.object3D.scale;
-      this.el.setAttribute('scale', `${currentScale.x * scaleMultiplier} ${currentScale.y * scaleMultiplier} ${currentScale.z * scaleMultiplier}`);
-    } else if (this.mode === 'rotate') {
-      let angleDiff = currentAngle - this.lastAngle;
-      if (angleDiff > 180) angleDiff -= 360;
-      if (angleDiff < -180) angleDiff += 360;
+    if (this.mode !== 'none' && e.touches.length >= 2) {
+      const currentDist = this.getDistance(e.touches[0], e.touches[1]);
+      const currentAngle = this.getAngle(e.touches[0], e.touches[1]);
       
-      // Rotate around Y axis
-      this.el.object3D.rotation.y -= angleDiff * (Math.PI / 180);
+      if (this.mode === 'pending') {
+        const distDelta = Math.abs(currentDist - this.startDist);
+        let angleDelta = Math.abs(currentAngle - this.startAngle);
+        if (angleDelta > 180) angleDelta = 360 - angleDelta;
+
+        if (distDelta > this.scaleThreshold && distDelta > angleDelta * 3) {
+          this.mode = 'scale';
+        } else if (angleDelta > this.rotateThreshold) {
+          this.mode = 'rotate';
+        }
+      }
+      
+      if (this.mode === 'scale') {
+        const scaleMultiplier = currentDist / this.lastDist;
+        const currentScale = this.el.object3D.scale;
+        this.el.setAttribute('scale', `${currentScale.x * scaleMultiplier} ${currentScale.y * scaleMultiplier} ${currentScale.z * scaleMultiplier}`);
+        e.preventDefault();
+        e.stopPropagation();
+      } else if (this.mode === 'rotate') {
+        let angleDiff = currentAngle - this.lastAngle;
+        if (angleDiff > 180) angleDiff -= 360;
+        if (angleDiff < -180) angleDiff += 360;
+        
+        // Rotate around Y axis
+        this.el.object3D.rotation.y -= angleDiff * (Math.PI / 180);
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      this.lastDist = currentDist;
+      this.lastAngle = currentAngle;
+    } else if (this.mode !== 'none') {
+      // If we are in scale/rotate, block rogue single finger drags!
+      e.preventDefault();
+      e.stopPropagation();
     }
-    
-    this.lastDist = currentDist;
-    this.lastAngle = currentAngle;
   },
   onTouchEnd: function(e) {
-    if (e.touches.length < 2) {
+    if (e.touches.length === 0) {
+      if (this.mode !== 'none') {
+        // Only re-enable drag once ALL fingers are off the screen!
+        // This guarantees no trailing 1-finger drag jumps.
+        this.el.setAttribute('xrextras-hold-drag', '');
+      }
       this.mode = 'none';
+    } else if (this.mode !== 'none') {
+      // A finger lifted, but 1 is still on screen. 
+      // Block this event so xrextras doesn't glitch!
+      e.preventDefault();
+      e.stopPropagation();
     }
   }
 });
@@ -213,11 +237,11 @@ export const tapPlaceComponent = {
           return entity
         }
 
-        // Washing Machine: Increased 4x (0.85 * 4 = 3.4 meters)
-        this.machineEntity = createModel('#washingMachineModel', 3.4)
+        // Washing Machine: Increased additional 50% (3.4 * 1.5 = 5.1 meters)
+        this.machineEntity = createModel('#washingMachineModel', 5.1)
         
-        // Air Cooler: Increased 4x (1.0 * 4 = 4.0 meters)
-        this.coolerEntity = createModel('#airCoolerModel', 4.0)
+        // Air Cooler: Increased additional 50% (4.0 * 1.5 = 6.0 meters)
+        this.coolerEntity = createModel('#airCoolerModel', 6.0)
         this.coolerEntity.setAttribute('visible', 'false')
 
         // We don't need manual recentering since autoCenterAndScale handles it perfectly natively
