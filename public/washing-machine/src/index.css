@@ -48,9 +48,10 @@ body {
 
 #promptText {
   position: absolute;
-  top: 50%;
+  bottom: 15%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
+  z-index: 100;
   width: 80%;
   max-width: 320px;
   text-align: center;
@@ -71,7 +72,7 @@ body {
 }
 
 @keyframes pulse {
-  0% { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
-  50% { transform: translate(-50%, -50%) scale(1.03); opacity: 1; box-shadow: 0 0 20px rgba(255,255,255,0.15); }
-  100% { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
+  0% { transform: translateX(-50%) scale(1); opacity: 0.9; }
+  50% { transform: translateX(-50%) scale(1.03); opacity: 1; box-shadow: 0 0 20px rgba(255,255,255,0.15); }
+  100% { transform: translateX(-50%) scale(1); opacity: 0.9; }
 }
