@@ -2,6 +2,91 @@
 // Both models are loaded upfront at the same normalized size.
 // Switching is an instant visibility toggle — no reload, no flicker.
 
+AFRAME.registerComponent('exclusive-two-finger-transform', {
+  init: function() {
+    this.mode = 'none'; // 'scale', 'rotate'
+    this.startDist = 0;
+    this.startAngle = 0;
+    this.lastDist = 0;
+    this.lastAngle = 0;
+    
+    // Thresholds to lock into a specific mode
+    this.scaleThreshold = 15; // pixels
+    this.rotateThreshold = 8; // degrees
+
+    this.onTouchStart = this.onTouchStart.bind(this);
+    this.onTouchMove = this.onTouchMove.bind(this);
+    this.onTouchEnd = this.onTouchEnd.bind(this);
+
+    window.addEventListener('touchstart', this.onTouchStart, {passive: false});
+    window.addEventListener('touchmove', this.onTouchMove, {passive: false});
+    window.addEventListener('touchend', this.onTouchEnd, {passive: false});
+  },
+  remove: function() {
+    window.removeEventListener('touchstart', this.onTouchStart);
+    window.removeEventListener('touchmove', this.onTouchMove);
+    window.removeEventListener('touchend', this.onTouchEnd);
+  },
+  getDistance: function(t1, t2) {
+    const dx = t1.clientX - t2.clientX;
+    const dy = t1.clientY - t2.clientY;
+    return Math.sqrt(dx*dx + dy*dy);
+  },
+  getAngle: function(t1, t2) {
+    return Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * 180 / Math.PI;
+  },
+  onTouchStart: function(e) {
+    if (e.touches.length === 2) {
+      this.mode = 'pending';
+      this.startDist = this.getDistance(e.touches[0], e.touches[1]);
+      this.startAngle = this.getAngle(e.touches[0], e.touches[1]);
+      this.lastDist = this.startDist;
+      this.lastAngle = this.startAngle;
+    } else {
+      this.mode = 'none';
+    }
+  },
+  onTouchMove: function(e) {
+    if (e.touches.length !== 2) return;
+    
+    const currentDist = this.getDistance(e.touches[0], e.touches[1]);
+    const currentAngle = this.getAngle(e.touches[0], e.touches[1]);
+    
+    if (this.mode === 'pending') {
+      const distDelta = Math.abs(currentDist - this.startDist);
+      let angleDelta = Math.abs(currentAngle - this.startAngle);
+      if (angleDelta > 180) angleDelta = 360 - angleDelta;
+
+      if (distDelta > this.scaleThreshold && distDelta > angleDelta * 3) {
+        this.mode = 'scale';
+      } else if (angleDelta > this.rotateThreshold) {
+        this.mode = 'rotate';
+      }
+    }
+    
+    if (this.mode === 'scale') {
+      const scaleMultiplier = currentDist / this.lastDist;
+      const currentScale = this.el.object3D.scale;
+      this.el.setAttribute('scale', `${currentScale.x * scaleMultiplier} ${currentScale.y * scaleMultiplier} ${currentScale.z * scaleMultiplier}`);
+    } else if (this.mode === 'rotate') {
+      let angleDiff = currentAngle - this.lastAngle;
+      if (angleDiff > 180) angleDiff -= 360;
+      if (angleDiff < -180) angleDiff += 360;
+      
+      // Rotate around Y axis
+      this.el.object3D.rotation.y -= angleDiff * (Math.PI / 180);
+    }
+    
+    this.lastDist = currentDist;
+    this.lastAngle = currentAngle;
+  },
+  onTouchEnd: function(e) {
+    if (e.touches.length < 2) {
+      this.mode = 'none';
+    }
+  }
+});
+
 export const tapPlaceComponent = {
   init() {
     this.currentModelId = '#washingMachineModel'
@@ -74,10 +159,9 @@ export const tapPlaceComponent = {
         this.wrapperEntity = document.createElement('a-entity')
         this.wrapperEntity.setAttribute('position', touchPoint)
         this.wrapperEntity.setAttribute('rotation', `0 ${rotationY} 0`)
-        // We attach pinch-to-scale, two-finger-rotate, and hold-to-drag
-        this.wrapperEntity.setAttribute('xrextras-two-finger-rotate', '')
-        this.wrapperEntity.setAttribute('xrextras-pinch-scale', `min: 0.1; max: 10`)
+        // Enforce exclusive transformations: hold-drag (1 finger), our custom scale/rotate (2 fingers)
         this.wrapperEntity.setAttribute('xrextras-hold-drag', '')
+        this.wrapperEntity.setAttribute('exclusive-two-finger-transform', '')
         
         // Add cantap class so the raycaster can intersect the object for dragging
         this.wrapperEntity.classList.add('cantap')
@@ -129,11 +213,11 @@ export const tapPlaceComponent = {
           return entity
         }
 
-        // Washing Machine: ~0.85 meters tall in real life
-        this.machineEntity = createModel('#washingMachineModel', 0.85)
+        // Washing Machine: Increased 4x (0.85 * 4 = 3.4 meters)
+        this.machineEntity = createModel('#washingMachineModel', 3.4)
         
-        // Air Cooler: ~1.0 meters tall in real life
-        this.coolerEntity = createModel('#airCoolerModel', 1.0)
+        // Air Cooler: Increased 4x (1.0 * 4 = 4.0 meters)
+        this.coolerEntity = createModel('#airCoolerModel', 4.0)
         this.coolerEntity.setAttribute('visible', 'false')
 
         // We don't need manual recentering since autoCenterAndScale handles it perfectly natively

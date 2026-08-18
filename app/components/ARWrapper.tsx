@@ -93,7 +93,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   container: {
     position: 'relative',
     width: '100vw',
-    height: '100vh',
+    height: '100dvh', /* Fixes mobile browser address bar cut-off */
     overflow: 'hidden',
     background: '#050505',
     fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
