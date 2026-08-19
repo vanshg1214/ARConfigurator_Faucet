@@ -381,11 +381,11 @@ export const tapPlaceComponent = {
           return entity
         }
 
-        // Washing Machine: Increased additional 50% (3.4 * 1.5 = 5.1 meters)
-        this.machineEntity = createModel('#washingMachineModel', 5.1)
+        // Washing Machine: True 1:1 real-world size (0.85 meters)
+        this.machineEntity = createModel('#washingMachineModel', 0.85)
         
-        // Air Cooler: Increased additional 50% (4.0 * 1.5 = 6.0 meters)
-        this.coolerEntity = createModel('#airCoolerModel', 6.0)
+        // Air Cooler: True 1:1 real-world size (1.0 meters)
+        this.coolerEntity = createModel('#airCoolerModel', 1.0)
         this.coolerEntity.setAttribute('visible', 'false')
 
         // We don't need manual recentering since autoCenterAndScale handles it perfectly natively
