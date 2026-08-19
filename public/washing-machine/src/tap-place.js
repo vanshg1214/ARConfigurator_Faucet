@@ -23,6 +23,7 @@ AFRAME.registerComponent('custom-hold-drag', {
     this.dragging = false;
     this.touchId = null;
     this.dragOffset = new AFRAME.THREE.Vector3();
+    this.lastDragEndTime = 0; // NEW: Track when drag ends
     GestureState.dragComponent = this; // Register for cross-component cancel
 
     this.onTouchStart = this.onTouchStart.bind(this);
@@ -139,6 +140,7 @@ AFRAME.registerComponent('custom-hold-drag', {
     }
     this.dragging = false;
     this.touchId = null;
+    this.lastDragEndTime = Date.now(); // Store when drag ended
   },
 });
 
@@ -289,6 +291,11 @@ export const tapPlaceComponent = {
       if (!g) { setTimeout(attachListener, 100); return }
 
       g.addEventListener('click', (event) => {
+        // CRITICAL FIX: Block phantom synthetic clicks that fire after gestures!
+        if (Date.now() - GestureState.twoFingerEndTime < 500) return;
+        if (GestureState.dragComponent && GestureState.dragComponent.dragging) return;
+        if (GestureState.dragComponent && (Date.now() - GestureState.dragComponent.lastDragEndTime < 500)) return;
+
         const touchPoint = event.detail.intersection.point
 
         if (this.wrapperEntity) {
